@@ -9,7 +9,7 @@ export class PoolController {
 
   @Get("getPool")
   async getPool(@Query("poolId") poolId: string) {
-    return await this.server.getPool();
+    return await this.server.getPool(poolId);
   }
 
 }

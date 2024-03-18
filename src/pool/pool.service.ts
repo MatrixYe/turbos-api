@@ -6,14 +6,14 @@ import { Network, TurbosSdk } from "turbos-clmm-sdk";
 @Injectable()
 export class PoolService {
 
-  rpcUrl = getNodeUrl();
-  suiClient = new SuiClient({ url: this.rpcUrl });
+  suiClient = new SuiClient({ url: getNodeUrl() });
   sdk = new TurbosSdk(Network.mainnet, this.suiClient);
 
   async getPool(poolId: string) {
     // console.log(`pool: ${pool}`);
+    // this.sdk.trade.
     return await this.sdk.pool.getPool(poolId);
-
   }
+
 
 }

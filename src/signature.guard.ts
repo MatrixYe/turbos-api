@@ -19,7 +19,7 @@ export class SignatureGuard implements CanActivate {
     const apikey = request.headers["x-apikey"];
     // 签名允许
     if (!this.serverVerify) {
-      console.log(`SERVER_VERIFY ${this.serverVerify}---> pass`);
+      // console.log(`SERVER_VERIFY ${this.serverVerify}---> pass`);
       return true;
     }
     // 确保时间戳和签名都在请求头中
