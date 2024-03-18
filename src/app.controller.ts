@@ -1,6 +1,6 @@
 import { Controller, Get } from "@nestjs/common";
 import { AppService } from "./app.service";
-import { getWalletPrivateKey } from "./config";
+import { getNodeUrl, getWalletPrivateKey } from "./config";
 
 @Controller()
 export class AppController {
@@ -15,6 +15,8 @@ export class AppController {
   @Get("/config")
   config() {
     const v = getWalletPrivateKey();
+    let nodeUrl = getNodeUrl();
+    console.log(`url: ${nodeUrl}`);
     console.log(`v ${v}`);
     return v;
   }

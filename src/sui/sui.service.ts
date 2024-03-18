@@ -1,4 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from "@nestjs/common";
+import { Network, TurbosSdk } from "turbos-clmm-sdk";
 
 @Injectable()
-export class SuiService {}
+export class SuiService {
+
+  getAllBalances() {
+
+  }
+
+
+}

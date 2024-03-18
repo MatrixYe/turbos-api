@@ -1,4 +1,14 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get } from "@nestjs/common";
+import { SuiService } from "./sui.service";
 
-@Controller('sui')
-export class SuiController {}
+@Controller("sui")
+export class SuiController {
+  constructor(private service: SuiService) {
+  }
+
+  @Get("/getAllBalances")
+  getAllBalances() {
+    this.service.getAllBalances();
+  }
+
+}

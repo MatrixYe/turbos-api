@@ -59,3 +59,7 @@ export function getWalletPrivateKey(): string {
 export function getWalletAddress(): string {
   return conf.get<string>("WALLET_ADDRESS");
 }
+
+export function getNodeUrl(): string {
+  return conf.get<string>("NODE_URL");
+}
