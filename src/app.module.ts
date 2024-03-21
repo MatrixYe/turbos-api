@@ -13,16 +13,18 @@ import { SuiService } from "./sui/sui.service";
 import { PoolController } from "./pool/pool.controller";
 import { SwapController } from "./swap/swap.controller";
 import { PoolService } from "./pool/pool.service";
+import { ToolsService } from './tools/tools.service';
+import { ToolsController } from './tools/tools.controller';
 
 @Module({
   imports: [ConfigModule.forRoot({
     isGlobal: true,
   })],
-  controllers: [AppController, LiquidityController, PoolController, SwapController, SuiController],
+  controllers: [AppController, LiquidityController, PoolController, SwapController, SuiController, ToolsController],
   providers: [AppService, {
     provide: APP_GUARD,
     useClass: SignatureGuard,
-  }, LiquidityService, PoolService, SuiService, SwapService],
+  }, LiquidityService, PoolService, SuiService, SwapService, ToolsService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
