@@ -38,7 +38,6 @@ export class SwapController {
     const a2b: boolean = args.a2b;
     const amountSpecifiedIsInput: boolean = args.amountSpecifiedIsInput;
     const amount: string | number = args.amount;
-    const slippage: string = args.slippage;
     return this.server.computeSwapV2(poolID, coinTypeA, coinTypeB, a2b, amountSpecifiedIsInput, amount);
   }
 

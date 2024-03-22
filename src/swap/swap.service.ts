@@ -35,13 +35,13 @@ export class SwapService {
     //     const amountSpecifiedIsInput: boolean = true;
     //     const amount: string | number = 100000000;
     //     const slippage: string = "5";
-    console.log(`poolID ${poolID}`);
-    console.log(`coinTypeA ${coinTypeA}`);
-    console.log(`coinTypeB ${coinTypeB}`);
-    console.log(`a2b ${a2b}`);
-    console.log(`amountSpecifiedIsInput ${amountSpecifiedIsInput}`);
-    console.log(`amount ${amount}`);
-    console.log(`slippage ${slippage}`);
+    // console.log(`poolID ${poolID}`);
+    // console.log(`coinTypeA ${coinTypeA}`);
+    // console.log(`coinTypeB ${coinTypeB}`);
+    // console.log(`a2b ${a2b}`);
+    // console.log(`amountSpecifiedIsInput ${amountSpecifiedIsInput}`);
+    // console.log(`amount ${amount}`);
+    // console.log(`slippage ${slippage}`);
     const swapResults = await this.sdk.trade.computeSwapResultV2({
       address: this.sender,
       amountSpecifiedIsInput: amountSpecifiedIsInput,
@@ -70,7 +70,7 @@ export class SwapService {
         a2b: a2b,
         nextTickIndex: nextTickIndex,
       }],
-      slippage: slippage,//滑点，确认了，是百分比形式
+      slippage: slippage,//滑点，百分比形式
     });
 
     return await this.sdk.provider.signAndExecuteTransactionBlock({
@@ -83,6 +83,4 @@ export class SwapService {
     });
 
   }
-
-
 }

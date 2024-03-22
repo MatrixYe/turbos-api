@@ -9,9 +9,8 @@ export class PoolService {
   suiClient = new SuiClient({ url: getNodeUrl() });
   sdk = new TurbosSdk(Network.mainnet, this.suiClient);
 
+
   async getPool(poolId: string) {
-    // console.log(`pool: ${pool}`);
-    // this.sdk.trade.
     return await this.sdk.pool.getPool(poolId);
   }
 
