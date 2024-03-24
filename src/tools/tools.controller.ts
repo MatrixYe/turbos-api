@@ -89,4 +89,8 @@ export class ToolsController {
     };
   }
 
+  @Get("getCoinPriceUSD")
+  getCoinPriceUSD(@Query("coinType") coinType: string) {
+    return this.server.getCoinPriceUSD(coinType);
+  }
 }

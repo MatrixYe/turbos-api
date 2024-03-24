@@ -1,0 +1,19 @@
+{
+  "jsonrpc": "2.0",
+  "id": "24",
+  "method": "suix_getOwnedObjects",
+  "params": [
+    "0x638f76ebe9d0cb3a71c9f2086ffde2726c4eb22fe140cda2f9745312d7e2b913",
+    {
+      "filter": {
+        "Package": "0x91bfbc386a41afcfd9b2533058d7e915a1d3829089cc268ff4333d54d6339ca1"
+      },
+      "options": {
+        "showContent": true,
+        "showOwner": true
+      }
+    },
+    null,
+    null
+  ]
+}

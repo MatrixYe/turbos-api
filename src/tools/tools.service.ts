@@ -3,9 +3,14 @@ import { getNodeUrl, getWalletAddress, getWalletPrivateKey } from "../config";
 import { genKeypair } from "../wallet";
 import { BN, Network, TurbosSdk } from "turbos-clmm-sdk";
 import { SuiClient } from "@mysten/sui.js/client";
+import { HttpService } from "@nestjs/axios";
+import { map } from "rxjs/operators";
 
 @Injectable()
 export class ToolsService {
+  constructor(private httpService: HttpService) {
+  }
+
   suiClient = new SuiClient({ url: getNodeUrl() });
   sdk = new TurbosSdk(Network.mainnet, this.suiClient);
   sender = getWalletAddress();
@@ -51,6 +56,14 @@ export class ToolsService {
   tickIndexToSqrtPriceX64(tickIndex: number) {
     const sqrtPriceX64 = this.sdk.math.tickIndexToSqrtPriceX64(tickIndex);
     return sqrtPriceX64.toString();
+  }
+
+  async getCoinPriceUSD(coinType: string) {
+    // https://api.turbos.finance/price?coinType=0x2::sui::SUI
+
+    const url = "https://api.turbos.finance/price";
+    const params = { coinType: coinType }; // 这里定义你的请求参数
+    return await this.httpService.get(url, { params }).pipe(map(response => response.data)).toPromise();
   }
 
 

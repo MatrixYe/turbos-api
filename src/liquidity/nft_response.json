@@ -1,0 +1,53 @@
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "data": [
+      {
+        "data": {
+          "objectId": "0x9a9f818cc6ef26bbe953c152ab00e5b0bfa987af7885fe790fecabf3262f1975",
+          "version": "80603243",
+          "digest": "8etTztQp3R4HaRa2NYgeANVn8io9yjaNYvGw5fxtAkU8",
+          "owner": {
+            "AddressOwner": "0x638f76ebe9d0cb3a71c9f2086ffde2726c4eb22fe140cda2f9745312d7e2b913"
+          },
+          "content": {
+            "dataType": "moveObject",
+            "type": "0x91bfbc386a41afcfd9b2533058d7e915a1d3829089cc268ff4333d54d6339ca1::position_nft::TurbosPositionNFT",
+            "hasPublicTransfer": true,
+            "fields": {
+              "coin_type_a": {
+                "type": "0x1::type_name::TypeName",
+                "fields": {
+                  "name": "0000000000000000000000000000000000000000000000000000000000000002::sui::SUI"
+                }
+              },
+              "coin_type_b": {
+                "type": "0x1::type_name::TypeName",
+                "fields": {
+                  "name": "5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN"
+                }
+              },
+              "description": "An NFT created by Turbos CLMM",
+              "fee_type": {
+                "type": "0x1::type_name::TypeName",
+                "fields": {
+                  "name": "91bfbc386a41afcfd9b2533058d7e915a1d3829089cc268ff4333d54d6339ca1::fee3000bps::FEE3000BPS"
+                }
+              },
+              "id": {
+                "id": "0x9a9f818cc6ef26bbe953c152ab00e5b0bfa987af7885fe790fecabf3262f1975"
+              },
+              "img_url": "https://app.turbos.finance/Turbos_nft.png",
+              "name": "Turbos Position's NFT",
+              "pool_id": "0x5eb2dfcdd1b15d2021328258f6d5ec081e9a0cdcfa9e13a0eaeb9b5f7505ca78",
+              "position_id": "0x445ec084c88d3fc1be8510856dac89d15d59f879c76009a826be3ccae32aad71"
+            }
+          }
+        }
+      }
+    ],
+    "nextCursor": "0x9a9f818cc6ef26bbe953c152ab00e5b0bfa987af7885fe790fecabf3262f1975",
+    "hasNextPage": false
+  },
+  "id": "24"
+}
