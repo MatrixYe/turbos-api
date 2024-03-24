@@ -8,6 +8,14 @@ import { SuiClient } from "@mysten/sui.js/client";
 import { HttpService } from "@nestjs/axios";
 import { map } from "rxjs/operators";
 
+function getPriceFunction(coinType: string): Promise<string | number | undefined> {
+  const url = "https://api.turbos.finance/price";
+  const params = { coinType: coinType }; // 这里定义你的请求参数
+  const httpServer = new HttpService();
+  return httpServer.get(url, { params }).pipe(map(response => response.data["price"])).toPromise();
+  // return Promise.resolve("1.65");
+}
+
 @Injectable()
 export class LiquidityService {
   constructor(private httpService: HttpService) {
@@ -19,80 +27,6 @@ export class LiquidityService {
   sender = getWalletAddress();
   privateKey = getWalletPrivateKey();
   keypair = genKeypair(this.privateKey);
-
-  async addLiquidity() {
-    const poolId = "0x5eb2dfcdd1b15d2021328258f6d5ec081e9a0cdcfa9e13a0eaeb9b5f7505ca78";
-    const coinTypeA = "0x2::sui::SUI";
-    const coinTypeB = "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN";
-    const slippage = "5";
-    // 添加流动性
-    const calLiquidity = await this.sdk.pool.getFixedLiquidity({
-      amountA: undefined,
-      amountB: undefined,
-      coinTypeA: coinTypeA,
-      coinTypeB: coinTypeB,
-      priceA: undefined,
-      priceB: undefined,
-    });
-
-    this.sdk.pool.getTokenAmountsFromLiquidity({
-      currentSqrtPrice: undefined,
-      lowerSqrtPrice: undefined,
-      upperSqrtPrice: undefined,
-      liquidity: undefined,
-    });
-
-    // await this.sdk.pool.addLiquidity({
-    //   address: this.sender,
-    //   amountA: undefined,
-    //   amountB: undefined,
-    //   pool: poolId,
-    //   slippage: slippage,
-    //   tickLower: 0,
-    //   tickUpper: 0,
-    // });
-  }
-
-  // 移除流动性
-  async removeLiquidity() {
-    await this.sdk.pool.removeLiquidity({
-      address: "",
-      amountA: undefined,
-      amountB: undefined,
-      collectAmountA: undefined,
-      collectAmountB: undefined,
-      decreaseLiquidity: undefined,
-      nft: "",
-      pool: "",
-      rewardAmounts: [],
-      slippage: undefined,
-    });
-  }
-
-  // 增加流动性
-  async increaseLiquidity() {
-    await this.sdk.pool.increaseLiquidity({
-      address: "",
-      amountA: undefined,
-      amountB: undefined,
-      nft: "",
-      pool: "",
-      slippage: undefined,
-    });
-  }
-
-  // 减少流动性
-  async decreaseLiquidity() {
-    await this.sdk.pool.decreaseLiquidity({
-      address: "",
-      amountA: undefined,
-      amountB: undefined,
-      decreaseLiquidity: undefined,
-      nft: "",
-      pool: "",
-      slippage: undefined,
-    });
-  }
 
 
   async getPositionIDsByOwner(owner: string, cursor?: string) {
@@ -178,6 +112,7 @@ export class LiquidityService {
     return null;
   }
 
+  // 计算代币数量by liquidity
   getTokenAmountsFromLiquidity(liquidity: string, tick_lower_index_bits: number, tick_upper_index_bits: number, currentSqrtPrice: string) {
 
     const tick_lower_index = this.sdk.math.bitsToNumber(tick_lower_index_bits);
@@ -192,6 +127,90 @@ export class LiquidityService {
       upperSqrtPrice: upperSqrtPrice,
     });
     return [amountA.toString(), amountB.toString(), tick_lower_index, tick_upper_index];
+  }
+
+
+  async addLiquidity() {
+    const poolId = "0x5eb2dfcdd1b15d2021328258f6d5ec081e9a0cdcfa9e13a0eaeb9b5f7505ca78";
+    const coinTypeA = "0x2::sui::SUI";
+    const coinTypeB = "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN";
+    const slippage = "5";
+    // 添加流动性
+    const calLiquidity = await this.sdk.pool.getFixedLiquidity({
+      amountA: 10000000000,
+      amountB: 10000000,
+      coinTypeA: coinTypeA,
+      coinTypeB: coinTypeB,
+      priceA: undefined,
+      priceB: undefined,
+    });
+
+    this.sdk.pool.getTokenAmountsFromLiquidity({
+      currentSqrtPrice: undefined,
+      lowerSqrtPrice: undefined,
+      upperSqrtPrice: undefined,
+      liquidity: undefined,
+    });
+
+  }
+
+  // 移除流动性
+  async removeLiquidity() {
+    await this.sdk.pool.removeLiquidity({
+      address: "",
+      amountA: undefined,
+      amountB: undefined,
+      collectAmountA: undefined,
+      collectAmountB: undefined,
+      decreaseLiquidity: undefined,
+      nft: "",
+      pool: "",
+      rewardAmounts: [],
+      slippage: undefined,
+    });
+  }
+
+  // 增加流动性
+  async increaseLiquidity() {
+    await this.sdk.pool.increaseLiquidity({
+      address: "",
+      amountA: undefined,
+      amountB: undefined,
+      nft: "",
+      pool: "",
+      slippage: undefined,
+    });
+  }
+
+  // 减少流动性
+  async decreaseLiquidity() {
+    await this.sdk.pool.decreaseLiquidity({
+      address: "",
+      amountA: undefined,
+      amountB: undefined,
+      decreaseLiquidity: undefined,
+      nft: "",
+      pool: "",
+      slippage: undefined,
+    });
+  }
+
+
+  async getUnclaimedFeesAndRewards(poolID: string, posID: string) {
+// 构建options对象
+//     const poolID = "0x5eb2dfcdd1b15d2021328258f6d5ec081e9a0cdcfa9e13a0eaeb9b5f7505ca78";
+//     const posID = "0x445ec084c88d3fc1be8510856dac89d15d59f879c76009a826be3ccae32aad71";
+
+    const pos = await this.sdk.nft.getPositionFieldsByPositionId(posID);
+
+    const options = {
+      poolId: poolID,
+      position: pos,
+      getPrice: getPriceFunction,
+    };
+
+    return await this.sdk.nft.getUnclaimedFeesAndRewards(options);
+
   }
 }
 

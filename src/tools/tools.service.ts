@@ -60,7 +60,6 @@ export class ToolsService {
 
   async getCoinPriceUSD(coinType: string) {
     // https://api.turbos.finance/price?coinType=0x2::sui::SUI
-
     const url = "https://api.turbos.finance/price";
     const params = { coinType: coinType }; // 这里定义你的请求参数
     return await this.httpService.get(url, { params }).pipe(map(response => response.data)).toPromise();
