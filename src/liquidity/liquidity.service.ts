@@ -3,7 +3,7 @@
 import { Injectable } from "@nestjs/common";
 import { getNodeUrl, getWalletAddress, getWalletPrivateKey } from "../config";
 import { genKeypair } from "../wallet";
-import { Network, TurbosSdk } from "turbos-clmm-sdk";
+import { BN, Network, TurbosSdk } from "turbos-clmm-sdk";
 import { SuiClient } from "@mysten/sui.js/client";
 import { HttpService } from "@nestjs/axios";
 import { map } from "rxjs/operators";
@@ -22,26 +22,35 @@ export class LiquidityService {
 
   async addLiquidity() {
     const poolId = "0x5eb2dfcdd1b15d2021328258f6d5ec081e9a0cdcfa9e13a0eaeb9b5f7505ca78";
+    const coinTypeA = "0x2::sui::SUI";
+    const coinTypeB = "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN";
     const slippage = "5";
-    this.sdk;
     // 添加流动性
-    this.sdk.pool.getFixedLiquidity({
+    const calLiquidity = await this.sdk.pool.getFixedLiquidity({
       amountA: undefined,
       amountB: undefined,
-      coinTypeA: "",
-      coinTypeB: "",
+      coinTypeA: coinTypeA,
+      coinTypeB: coinTypeB,
       priceA: undefined,
       priceB: undefined,
     });
-    await this.sdk.pool.addLiquidity({
-      address: this.sender,
-      amountA: undefined,
-      amountB: undefined,
-      pool: poolId,
-      slippage: slippage,
-      tickLower: 0,
-      tickUpper: 0,
+
+    this.sdk.pool.getTokenAmountsFromLiquidity({
+      currentSqrtPrice: undefined,
+      lowerSqrtPrice: undefined,
+      upperSqrtPrice: undefined,
+      liquidity: undefined,
     });
+
+    // await this.sdk.pool.addLiquidity({
+    //   address: this.sender,
+    //   amountA: undefined,
+    //   amountB: undefined,
+    //   pool: poolId,
+    //   slippage: slippage,
+    //   tickLower: 0,
+    //   tickUpper: 0,
+    // });
   }
 
   // 移除流动性
@@ -82,16 +91,6 @@ export class LiquidityService {
       nft: "",
       pool: "",
       slippage: undefined,
-    });
-  }
-
-
-  getTokenAmountsFromLiquidity() {
-    const [a, b] = this.sdk.pool.getTokenAmountsFromLiquidity({
-      currentSqrtPrice: undefined,
-      liquidity: undefined,
-      lowerSqrtPrice: undefined,
-      upperSqrtPrice: undefined,
     });
   }
 
@@ -168,6 +167,7 @@ export class LiquidityService {
     };
   }
 
+  // 获取仓位详情
   async getPositionByID(nftID: string, posID: string) {
     if (nftID != null && nftID != "") {
       return await this.sdk.nft.getPositionFields(nftID);
@@ -176,6 +176,22 @@ export class LiquidityService {
       return await this.sdk.nft.getPositionFieldsByPositionId(posID);
     }
     return null;
+  }
+
+  getTokenAmountsFromLiquidity(liquidity: string, tick_lower_index_bits: number, tick_upper_index_bits: number, currentSqrtPrice: string) {
+
+    const tick_lower_index = this.sdk.math.bitsToNumber(tick_lower_index_bits);
+    const tick_upper_index = this.sdk.math.bitsToNumber(tick_upper_index_bits);
+    const lowerSqrtPrice = this.sdk.math.tickIndexToSqrtPriceX64(tick_lower_index);
+    const upperSqrtPrice = this.sdk.math.tickIndexToSqrtPriceX64(tick_upper_index);
+    const [amountA, amountB] = this.sdk.pool.getTokenAmountsFromLiquidity({
+      ceil: true,
+      currentSqrtPrice: new BN(currentSqrtPrice),
+      liquidity: new BN(liquidity),
+      lowerSqrtPrice: lowerSqrtPrice,
+      upperSqrtPrice: upperSqrtPrice,
+    });
+    return [amountA.toString(), amountB.toString(), tick_lower_index, tick_upper_index];
   }
 }
 
