@@ -168,11 +168,14 @@ export class LiquidityService {
     };
   }
 
-  async getPositionByID(nftID: string) {
-    return await this.sdk.nft.getPositionFields(nftID);
-
+  async getPositionByID(nftID: string, posID: string) {
+    if (nftID != null && nftID != "") {
+      return await this.sdk.nft.getPositionFields(nftID);
+    }
+    if (posID != null && posID != "") {
+      return await this.sdk.nft.getPositionFieldsByPositionId(posID);
+    }
+    return null;
   }
-
-
 }
 

@@ -1,3 +1,5 @@
+// noinspection SpellCheckingInspection
+
 import { Controller, Get, Post, Query } from "@nestjs/common";
 import { LiquidityService } from "./liquidity.service";
 
@@ -19,5 +21,10 @@ export class LiquidityController {
   @Get("getPositionsByOwner2")
   getPositionsByOwner2(@Query("owner") owner: string, @Query("cursor") cursor: string) {
     return this.server.getPositionIDsByOwner2(owner);
+  }
+
+  @Get("getPositionByID")
+  getPositionByID(@Query("nftID") nftID?: string, @Query("posID") posID?: string) {
+    return this.server.getPositionByID(nftID, posID);
   }
 }
