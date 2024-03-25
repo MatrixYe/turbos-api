@@ -24,6 +24,9 @@ export class SuiController {
 
   @Get("/getCoinMeat")
   async getCoinMeat(@Query("coinType") coinType: string) {
+    if (!coinType) {
+      throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
+    }
     return await this.service.coinMeta(coinType);
   }
 

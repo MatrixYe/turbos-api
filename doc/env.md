@@ -1,5 +1,7 @@
 
 # 配置文件示例
+- 文件名: `.env`
+- 路径:项目根目录
 ```dotenv
 #---------------------服务相关----------------------#
 #程序名称
@@ -16,6 +18,7 @@ SERVER_VERIFY=true
 SERVER_API_KEY="your api key"
 # 密钥
 SERVER_SECRET_KEY="your sercert key"
+# 签名有效时间，单位s,默认10秒内有效
 SERVER_TIMESTAMP_LIMIT=10
 
 

@@ -1,4 +1,4 @@
-// noinspection SpellCheckingInspection
+// noinspection SpellCheckingInspection,JSUnusedGlobalSymbols
 
 import { Injectable } from "@nestjs/common";
 import { getNodeUrl, getWalletAddress, getWalletPrivateKey } from "../config";
@@ -27,6 +27,24 @@ export class LiquidityService {
   privateKey = getWalletPrivateKey();
   keypair = genKeypair(this.privateKey);
 
+  private mappingNFT(results) {
+    const hasNextPage = results.hasNextPage;
+    const nextCursor = results.nextCursor;
+    const data = results.data;
+    const nfts = data.map(item => ({
+      "objectId": item.data.objectId,
+      "owner": item.data.owner["AddressOwner"],
+      "img_url": item.data.content["fields"]["img_url"],
+      "name": item.data.content["fields"]["name"],
+      "pool_id": item.data.content["fields"]["pool_id"],
+      "position_id": item.data.content["fields"]["position_id"],
+    }));
+    return {
+      "hasNextPage": hasNextPage,
+      "nextCursor": nextCursor,
+      "nfts": nfts,
+    };
+  }
 
   async getPositionIDsByOwner(owner: string, cursor?: string) {
     const results = await this.sdk.provider.getOwnedObjects(
@@ -81,24 +99,6 @@ export class LiquidityService {
     return this.mappingNFT(resp["result"]);
   }
 
-  private mappingNFT(results) {
-    const hasNextPage = results.hasNextPage;
-    const nextCursor = results.nextCursor;
-    const data = results.data;
-    const nfts = data.map(item => ({
-      "objectId": item.data.objectId,
-      "owner": item.data.owner["AddressOwner"],
-      "img_url": item.data.content["fields"]["img_url"],
-      "name": item.data.content["fields"]["name"],
-      "pool_id": item.data.content["fields"]["pool_id"],
-      "position_id": item.data.content["fields"]["position_id"],
-    }));
-    return {
-      "hasNextPage": hasNextPage,
-      "nextCursor": nextCursor,
-      "nfts": nfts,
-    };
-  }
 
   // 获取仓位详情
   async getPositionByID(nftID: string, posID: string) {
@@ -133,33 +133,28 @@ export class LiquidityService {
     const poolId = "0x5eb2dfcdd1b15d2021328258f6d5ec081e9a0cdcfa9e13a0eaeb9b5f7505ca78";
     const coinTypeA = "0x2::sui::SUI";
     const coinTypeB = "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN";
-    const slippage = "2";
+    const slippage = "1";
+    const priceA = "1.79";
+    const priceB = "1";
     // 添加流动性
     const calLiquidity = await this.sdk.pool.getFixedLiquidity({
-      amountA: 10000000000,
-      amountB: 10000000,
+      amountA: 6430640000,
+      amountB: 7822300,
       coinTypeA: coinTypeA,
       coinTypeB: coinTypeB,
-      priceA: undefined,
-      priceB: undefined,
+      priceA: priceA,
+      priceB: priceB,
     });
-
-    await this.sdk.pool.addLiquidity({
-      address: "",
-      amountA: undefined,
-      amountB: undefined,
-      pool: "",
-      slippage: undefined,
-      tickLower: 0,
-      tickUpper: 0,
-    });
-
-    this.sdk.pool.getTokenAmountsFromLiquidity({
-      currentSqrtPrice: undefined,
-      lowerSqrtPrice: undefined,
-      upperSqrtPrice: undefined,
-      liquidity: undefined,
-    });
+    return calLiquidity;
+    // await this.sdk.pool.addLiquidity({
+    //   address: this.sender,
+    //   amountA: undefined,
+    //   amountB: undefined,
+    //   pool: "",
+    //   slippage: undefined,
+    //   tickLower: 0,
+    //   tickUpper: 0,
+    // });
 
 
   }
@@ -222,5 +217,94 @@ export class LiquidityService {
     return await this.sdk.nft.getUnclaimedFeesAndRewards(options);
 
   }
+
+  private calLpTokenAmount(tick_current_index: number, tick_lower_index: number, tick_upper_index: number, decimalsA: number, decimalsB: number): CalLpTokenAmountBase {
+    if ((tick_current_index - tick_lower_index) <= 0) {
+      //当前价格位于区间外，左侧，只需要提供报价币种
+      return {
+        amountA: 1,
+        amountB: 0,
+        compositionA: 1,
+        compositionB: 0,
+      };
+    }
+    if ((tick_current_index - tick_upper_index) > 0) {
+      //当前价格位于区间外，右侧，只需要提供基础币种
+      return {
+        amountA: 0,
+        amountB: 1,
+        compositionA: 0,
+        compositionB: 1,
+      };
+    }
+    const span = tick_upper_index - tick_lower_index;
+    const a = (tick_current_index - tick_lower_index) / span;
+    const b = (tick_upper_index - tick_current_index) / span;
+    const price_current = this.sdk.math.tickIndexToPrice(tick_current_index, decimalsA, decimalsB).toNumber();
+    const amountA = 1;
+    const amountB = amountA * price_current / (a / b);
+    return {
+      amountA: amountA,
+      amountB: amountB,
+      compositionA: a,
+      compositionB: b,
+    };
+  }
+
+  //预估流动性添加代币数量
+  calLpTokenAmountByPrice(price_current: string, price_lower: string, price_upper: string, decimalsA: number, decimalsB: number): CalLpTokenAmountResult {
+    const tick_current_index = this.sdk.math.priceToTickIndex(price_current, decimalsA, decimalsB);
+    const tick_lower_index = this.sdk.math.priceToTickIndex(price_lower, decimalsA, decimalsB);
+    const tick_upper_index = this.sdk.math.priceToTickIndex(price_upper, decimalsA, decimalsB);
+    console.log(`calLpTokenAmountByPrice tick_current_index ${tick_current_index}`);
+    console.log(`calLpTokenAmountByPrice tick_lower_index ${tick_lower_index}`);
+    console.log(`calLpTokenAmountByPrice tick_upper_index ${tick_upper_index}`);
+    const amountBase = this.calLpTokenAmount(tick_current_index, tick_lower_index, tick_upper_index, decimalsA, decimalsB);
+    return {
+      amountA: amountBase.amountA,
+      amountB: amountBase.amountB,
+      compositionA: amountBase.compositionA,
+      compositionB: amountBase.compositionB,
+      price_current: price_current,
+      price_lower: price_lower,
+      price_upper: price_upper,
+      tick_current_index: tick_current_index,
+      tick_lower_index: tick_lower_index,
+      tick_upper_index: tick_upper_index,
+    };
+
+  }
+
+  calLpTokenAmountByTicks(tick_current_index: number, tick_lower_index: number, tick_upper_index: number, decimalsA: number, decimalsB: number): CalLpTokenAmountResult {
+    const amountBase = this.calLpTokenAmount(tick_current_index, tick_lower_index, tick_upper_index, decimalsA, decimalsB);
+    return {
+      amountA: amountBase.amountA,
+      amountB: amountBase.amountB,
+      compositionA: amountBase.compositionA,
+      compositionB: amountBase.compositionB,
+      price_current: this.sdk.math.tickIndexToPrice(tick_current_index, decimalsA, decimalsB).toString(),
+      price_lower: this.sdk.math.tickIndexToPrice(tick_lower_index, decimalsA, decimalsB).toString(),
+      price_upper: this.sdk.math.tickIndexToPrice(tick_upper_index, decimalsA, decimalsB).toString(),
+      tick_current_index: tick_current_index,
+      tick_lower_index: tick_lower_index,
+      tick_upper_index: tick_upper_index,
+    };
+  }
+
 }
 
+export interface CalLpTokenAmountBase {
+  amountA: number;
+  amountB: number;
+  compositionA: number,
+  compositionB: number
+}
+
+export interface CalLpTokenAmountResult extends CalLpTokenAmountBase {
+  tick_current_index: number;
+  tick_lower_index: number;
+  tick_upper_index: number;
+  price_current: string;
+  price_lower: string;
+  price_upper: string;
+}
