@@ -1,6 +1,6 @@
 // noinspection SpellCheckingInspection
 
-import { Controller, Get, Post, Query } from "@nestjs/common";
+import { Controller, Get, HttpException, HttpStatus, Post, Query } from "@nestjs/common";
 import { LiquidityService } from "./liquidity.service";
 
 @Controller("liquidity")
@@ -12,18 +12,27 @@ export class LiquidityController {
   // 获取仓位列表
   @Get("getPositionsByOwner")
   getPositionsByOwner(@Query("owner") owner: string, @Query("cursor") cursor: string) {
+    if (!owner) {
+      throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
+    }
     return this.server.getPositionIDsByOwner(owner, cursor);
   }
 
   // 获取仓位列表2
   @Get("getPositionsByOwner2")
   getPositionsByOwner2(@Query("owner") owner: string, @Query("cursor") cursor: string) {
+    if (!owner) {
+      throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
+    }
     return this.server.getPositionIDsByOwner2(owner);
   }
 
   // 获取仓位详情
   @Get("getPositionByID")
   getPositionByID(@Query("nftID") nftID?: string, @Query("posID") posID?: string) {
+    if (!nftID && !posID) {
+      throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
+    }
     return this.server.getPositionByID(nftID, posID);
   }
 
@@ -37,6 +46,9 @@ export class LiquidityController {
     // console.log(`tick_lower_index_bits ${tick_lower_index_bits}`);
     // console.log(`tick_upper_index_bits ${tick_upper_index_bits}`);
     // console.log(`currentSqrtPrice ${currentSqrtPrice}`);
+    if (!liquidity || !tick_lower_index_bits || !tick_upper_index_bits || !currentSqrtPrice) {
+      throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
+    }
     const [a, b, tick_lower_index, tick_upper_index] = this.server.getTokenAmountsFromLiquidity(liquidity, tick_lower_index_bits, tick_upper_index_bits, currentSqrtPrice);
     return {
       "amountA": a,
@@ -48,8 +60,11 @@ export class LiquidityController {
 
   @Get("getUnclaimedFeesAndRewards")
   getUnclaimedFeesAndRewards(@Query("poolID") poolID: string, @Query("posID") posID: string) {
-    console.log(`posID ${posID}`);
-    console.log(`poolID ${poolID}`);
+    // console.log(`posID ${posID}`);
+    // console.log(`poolID ${poolID}`);
+    if (!poolID || !posID) {
+      throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
+    }
     return this.server.getUnclaimedFeesAndRewards(poolID, posID);
   }
 

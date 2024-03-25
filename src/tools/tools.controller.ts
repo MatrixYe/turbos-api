@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from "@nestjs/common";
+import { Controller, Get, HttpException, HttpStatus, Query } from "@nestjs/common";
 import { ToolsService } from "./tools.service";
 
 @Controller("tools")
@@ -8,7 +8,7 @@ export class ToolsController {
 
   // 验证私钥推导出的地址是否与配置文件中的sender地址是否匹配
   @Get("verifyAddress")
-  async test() {
+  async verifyAddress() {
     const result = this.server.verifyAddress();
     return {
       "calculate_address": result[0],
@@ -19,6 +19,9 @@ export class ToolsController {
 
   @Get("priceToSqrtPriceX64")
   priceToSqrtPriceX64(@Query("price") price: string, @Query("decimalsA") decimalsA: number, @Query("decimalsB") decimalsB: number) {
+    if (!price || !decimalsA || !decimalsB) {
+      throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
+    }
     const sp = this.server.priceToSqrtPriceX64(price, decimalsA, decimalsB);
     return {
       "sqrtPriceX64": sp,

@@ -9,6 +9,9 @@ export class PoolController {
 
   @Get("getPool")
   async getPool(@Query("poolId") poolId: string) {
+    if (!poolId) {
+      throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
+    }
     return await this.server.getPool(poolId);
   }
 
@@ -17,14 +20,8 @@ export class PoolController {
                       @Query("decimalsA") decimalsA: number,
                       @Query("decimalsB") decimalsB: number) {
     if (!poolID || !decimalsB || !decimalsA || decimalsA < 0 || decimalsB < 0) {
-      throw new HttpException("请求参数错误", HttpStatus.BAD_REQUEST);
+      throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
     }
     return await this.server.getSimplePool(poolID, decimalsA, decimalsB);
-
-    // try {
-    //   return await this.server.getSimplePool(poolID, decimalsA, decimalsB);
-    // } catch (e) {
-    //   throw new HttpException(e, HttpStatus.INTERNAL_SERVER_ERROR);
-    // }
   }
 }
