@@ -24,19 +24,62 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Installation
+turbos 接口服务
+## 安装
 
 ```bash
 $ npm install
 ```
+## 签名私钥生成器
+请使用[key_gen](./key_gen.py)生成apikey 和secret key,并使用[key_verify](./key_verify.py)验证签名是否正确
+## 配置文件示例
+请在项目根路径下创建一个.env文件，文件模版如下:
+```.dotenv
+#---------------------服务相关----------------------#
+#程序名称
+APP_NAME="Turbos API"
+#兼容IPV6,请使用localhost
+APP_HOST="localhost"
+# 服务端口，如果不填，默认5010
+APP_PORT=5010
 
-## Running the app
+#---------------------接口加密相关----------------------#
+# 是否打开接口加密，生产环境下必须为true
+SERVER_VERIFY=false
+# api key,(替换)
+SERVER_API_KEY="server_api_key"
+# 密钥，(替换)
+SERVER_SECRET_KEY="server_secret_key"
+SERVER_TIMESTAMP_LIMIT=10
+
+
+#---------------------区块网络相关----------------------#
+#目标sui网络，mainnet:主网，devnet:测试网
+NETWORK="mainnet"
+
+# 网络节点(替换)
+NODE_URL="https://sui-mainnet-rpc.allthatnode.com/tnn5tw00YSIbbHO6r3ttbj11qWzqBsMq"
+
+# 钱包地址(替换)
+WALLET_ADDRESS="0x........."
+
+# 钱包私钥，切勿泄漏（替换）
+WALLET_PRIVATE_KEY="your-key........."
+
+
+```
+
+## 编译&运行
 
 ```bash
-# development
+# build
 $ npm run build
 # production mode
 $ npm run start:prod
 ```
+
+
+## 示例代码
+[客户端请求示例python版本](..%2F..%2FPython%2Fdquant-client-demo%2Fturbos_api_demo.py)
+
+
