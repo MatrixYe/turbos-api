@@ -220,7 +220,7 @@ export class LiquidityService {
 
   private calLpTokenAmount(tick_current_index: number, tick_lower_index: number, tick_upper_index: number, decimalsA: number, decimalsB: number): CalLpTokenAmountBase {
     if ((tick_current_index - tick_lower_index) <= 0) {
-      //当前价格位于区间外，左侧，只需要提供报价币种
+      //当前价不在区间，区间位于右，币种A
       return {
         amountA: 1,
         amountB: 0,
@@ -229,7 +229,7 @@ export class LiquidityService {
       };
     }
     if ((tick_current_index - tick_upper_index) > 0) {
-      //当前价格位于区间外，右侧，只需要提供基础币种
+      //当前价不在区间，区间位于左侧，币种B
       return {
         amountA: 0,
         amountB: 1,
@@ -238,8 +238,8 @@ export class LiquidityService {
       };
     }
     const span = tick_upper_index - tick_lower_index;
-    const a = (tick_current_index - tick_lower_index) / span;
-    const b = (tick_upper_index - tick_current_index) / span;
+    const b = (tick_current_index - tick_lower_index) / span;
+    const a = (tick_upper_index - tick_current_index) / span;
     const price_current = this.sdk.math.tickIndexToPrice(tick_current_index, decimalsA, decimalsB).toNumber();
     const amountA = 1;
     const amountB = amountA * price_current / (a / b);
@@ -256,9 +256,6 @@ export class LiquidityService {
     const tick_current_index = this.sdk.math.priceToTickIndex(price_current, decimalsA, decimalsB);
     const tick_lower_index = this.sdk.math.priceToTickIndex(price_lower, decimalsA, decimalsB);
     const tick_upper_index = this.sdk.math.priceToTickIndex(price_upper, decimalsA, decimalsB);
-    console.log(`calLpTokenAmountByPrice tick_current_index ${tick_current_index}`);
-    console.log(`calLpTokenAmountByPrice tick_lower_index ${tick_lower_index}`);
-    console.log(`calLpTokenAmountByPrice tick_upper_index ${tick_upper_index}`);
     const amountBase = this.calLpTokenAmount(tick_current_index, tick_lower_index, tick_upper_index, decimalsA, decimalsB);
     return {
       amountA: amountBase.amountA,

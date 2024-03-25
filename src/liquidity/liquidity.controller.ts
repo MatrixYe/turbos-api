@@ -42,10 +42,6 @@ export class LiquidityController {
                                @Query("tick_lower_index_bits") tick_lower_index_bits: number,
                                @Query("tick_upper_index_bits") tick_upper_index_bits: number,
                                @Query("currentSqrtPrice") currentSqrtPrice: string) {
-    // console.log(`liquidity ${liquidity}`);
-    // console.log(`tick_lower_index_bits ${tick_lower_index_bits}`);
-    // console.log(`tick_upper_index_bits ${tick_upper_index_bits}`);
-    // console.log(`currentSqrtPrice ${currentSqrtPrice}`);
     if (!liquidity || !tick_lower_index_bits || !tick_upper_index_bits || !currentSqrtPrice) {
       throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
     }
