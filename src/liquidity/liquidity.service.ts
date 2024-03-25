@@ -10,10 +10,9 @@ import { map } from "rxjs/operators";
 
 function getPriceFunction(coinType: string): Promise<string | number | undefined> {
   const url = "https://api.turbos.finance/price";
-  const params = { coinType: coinType }; // 这里定义你的请求参数
+  const params = { coinType: coinType };
   const httpServer = new HttpService();
   return httpServer.get(url, { params }).pipe(map(response => response.data["price"])).toPromise();
-  // return Promise.resolve("1.65");
 }
 
 @Injectable()
@@ -134,7 +133,7 @@ export class LiquidityService {
     const poolId = "0x5eb2dfcdd1b15d2021328258f6d5ec081e9a0cdcfa9e13a0eaeb9b5f7505ca78";
     const coinTypeA = "0x2::sui::SUI";
     const coinTypeB = "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN";
-    const slippage = "5";
+    const slippage = "2";
     // 添加流动性
     const calLiquidity = await this.sdk.pool.getFixedLiquidity({
       amountA: 10000000000,
@@ -144,6 +143,16 @@ export class LiquidityService {
       priceA: undefined,
       priceB: undefined,
     });
+    await this.sdk.pool;
+    await this.sdk.pool.addLiquidity({
+      address: "",
+      amountA: undefined,
+      amountB: undefined,
+      pool: "",
+      slippage: undefined,
+      tickLower: 0,
+      tickUpper: 0,
+    });
 
     this.sdk.pool.getTokenAmountsFromLiquidity({
       currentSqrtPrice: undefined,
@@ -151,6 +160,7 @@ export class LiquidityService {
       upperSqrtPrice: undefined,
       liquidity: undefined,
     });
+
 
   }
 
