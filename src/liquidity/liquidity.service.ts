@@ -143,7 +143,7 @@ export class LiquidityService {
       priceA: undefined,
       priceB: undefined,
     });
-    await this.sdk.pool;
+
     await this.sdk.pool.addLiquidity({
       address: "",
       amountA: undefined,
