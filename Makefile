@@ -1,20 +1,21 @@
-.PHONY: build start debug stop help
-
+.PHONY: build prod debug help
 
 ## 编译
 build:
 	echo 'todo'
+	npm run build
 
-## 启动
-start:
+## 生产环境
+prod:
 	echo 'start'
+	npm run build
+	npm run start:prod
 
-stop:
-	echo "stop"
 
 debug:
 	echo "debug"
 	npm run start:debug
+
 ## Show help
 help:
 	@echo ''
