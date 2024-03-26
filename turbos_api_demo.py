@@ -72,7 +72,7 @@ def to_swap():
     """
     url = f"{BASE_URL}/swap/to"
     data = {
-        "poolID": "0x5eb2dfcdd1b15d2021328258f6d5ec081e9a0cdcfa9e13a0eaeb9b5f7505ca78",
+        "poolId": "0x5eb2dfcdd1b15d2021328258f6d5ec081e9a0cdcfa9e13a0eaeb9b5f7505ca78",
         "coinTypeA": "0x2::sui::SUI",
         "coinTypeB": "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN",
         "a2b": True,
@@ -92,7 +92,7 @@ def computeSwapV2():
     """
     url = f"{BASE_URL}/swap/computeSwapV2"
     data = {
-        "poolID": "0x5eb2dfcdd1b15d2021328258f6d5ec081e9a0cdcfa9e13a0eaeb9b5f7505ca78",
+        "poolId": "0x5eb2dfcdd1b15d2021328258f6d5ec081e9a0cdcfa9e13a0eaeb9b5f7505ca78",
         "coinTypeA": "0x2::sui::SUI",
         "coinTypeB": "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN",
         "a2b": True,

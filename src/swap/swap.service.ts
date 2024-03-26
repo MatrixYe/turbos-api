@@ -12,13 +12,13 @@ export class SwapService {
   privateKey = getWalletPrivateKey();
   keypair = genKeypair(this.privateKey);
 
-  async computeSwapV2(poolID: string, coinTypeA: string, coinTypeB: string, a2b: boolean, amountSpecifiedIsInput: boolean, amount: string | number) {
+  async computeSwapV2(poolId: string, coinTypeA: string, coinTypeB: string, a2b: boolean, amountSpecifiedIsInput: boolean, amount: string | number) {
 
     const swapResults = await this.sdk.trade.computeSwapResultV2({
       address: this.sender,
       amountSpecifiedIsInput: amountSpecifiedIsInput,
       pools: [{
-        pool: poolID,
+        pool: poolId,
         a2b: a2b,
         amountSpecified: amount,
       }],
@@ -27,13 +27,13 @@ export class SwapService {
 
   }
 
-  async toSwap(poolID: string, coinTypeA: string, coinTypeB: string, a2b: boolean, amountSpecifiedIsInput: boolean, amount: string | number, slippage: string) {
+  async toSwap(poolId: string, coinTypeA: string, coinTypeB: string, a2b: boolean, amountSpecifiedIsInput: boolean, amount: string | number, slippage: string) {
 
     const swapResults = await this.sdk.trade.computeSwapResultV2({
       address: this.sender,
       amountSpecifiedIsInput: amountSpecifiedIsInput,
       pools: [{
-        pool: poolID,
+        pool: poolId,
         a2b: a2b,
         amountSpecified: amount,
       }],
@@ -53,7 +53,7 @@ export class SwapService {
       coinTypeA: coinTypeA,
       coinTypeB: coinTypeB,
       routes: [{
-        pool: poolID,
+        pool: poolId,
         a2b: a2b,
         nextTickIndex: nextTickIndex,
       }],

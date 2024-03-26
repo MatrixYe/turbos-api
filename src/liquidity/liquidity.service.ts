@@ -8,6 +8,23 @@ import { SuiClient } from "@mysten/sui.js/client";
 import { HttpService } from "@nestjs/axios";
 import { map } from "rxjs/operators";
 
+export interface CalLpTokenAmountBase {
+  amountA: number;
+  amountB: number;
+  compositionA: number;
+  compositionB: number;
+  place: number;
+}
+
+export interface CalLpTokenAmountResult extends CalLpTokenAmountBase {
+  tick_current_index: number;
+  tick_lower_index: number;
+  tick_upper_index: number;
+  price_current: string;
+  price_lower: string;
+  price_upper: string;
+}
+
 function getPriceFunction(coinType: string): Promise<string | number | undefined> {
   const url = "https://api.turbos.finance/price";
   const params = { coinType: coinType };
@@ -101,12 +118,12 @@ export class LiquidityService {
 
 
   // 获取仓位详情
-  async getPositionByID(nftID: string, posID: string) {
-    if (nftID != null && nftID != "") {
-      return await this.sdk.nft.getPositionFields(nftID);
+  async getPositionByID(nftId: string, posId: string) {
+    if (nftId != null && nftId != "") {
+      return await this.sdk.nft.getPositionFields(nftId);
     }
-    if (posID != null && posID != "") {
-      return await this.sdk.nft.getPositionFieldsByPositionId(posID);
+    if (posId != null && posId != "") {
+      return await this.sdk.nft.getPositionFieldsByPositionId(posId);
     }
     return null;
   }
@@ -129,34 +146,27 @@ export class LiquidityService {
   }
 
 
-  async addLiquidity() {
-    const poolId = "0x5eb2dfcdd1b15d2021328258f6d5ec081e9a0cdcfa9e13a0eaeb9b5f7505ca78";
-    const coinTypeA = "0x2::sui::SUI";
-    const coinTypeB = "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN";
-    const slippage = "1";
-    const priceA = "1.79";
-    const priceB = "1";
-    // 添加流动性
-    const calLiquidity = await this.sdk.pool.getFixedLiquidity({
-      amountA: 6430640000,
-      amountB: 7822300,
-      coinTypeA: coinTypeA,
-      coinTypeB: coinTypeB,
-      priceA: priceA,
-      priceB: priceB,
+  async addLiquidity(poolId: string, amountA: number | string, amountB: number | string, tickLower: number, tickUpper: number, slippage: string) {
+    /***
+     *
+     */
+    const txb = await this.sdk.pool.addLiquidity({
+      address: this.sender,
+      amountA: amountA,
+      amountB: amountB,
+      pool: poolId,
+      slippage: slippage,
+      tickLower: tickLower,
+      tickUpper: tickUpper,
     });
-    return calLiquidity;
-    // await this.sdk.pool.addLiquidity({
-    //   address: this.sender,
-    //   amountA: undefined,
-    //   amountB: undefined,
-    //   pool: "",
-    //   slippage: undefined,
-    //   tickLower: 0,
-    //   tickUpper: 0,
-    // });
-
-
+    return await this.sdk.provider.signAndExecuteTransactionBlock({
+      transactionBlock: txb,
+      signer: this.keypair,
+      requestType: "WaitForLocalExecution",
+      options: {
+        showEffects: true,
+      },
+    });
   }
 
   // 移除流动性
@@ -201,15 +211,15 @@ export class LiquidityService {
   }
 
 
-  async getUnclaimedFeesAndRewards(poolID: string, posID: string) {
+  async getUnclaimedFeesAndRewards(poolId: string, posId: string) {
 // 构建options对象
-//     const poolID = "0x5eb2dfcdd1b15d2021328258f6d5ec081e9a0cdcfa9e13a0eaeb9b5f7505ca78";
-//     const posID = "0x445ec084c88d3fc1be8510856dac89d15d59f879c76009a826be3ccae32aad71";
+//     const poolId = "0x5eb2dfcdd1b15d2021328258f6d5ec081e9a0cdcfa9e13a0eaeb9b5f7505ca78";
+//     const posId = "0x445ec084c88d3fc1be8510856dac89d15d59f879c76009a826be3ccae32aad71";
 
-    const pos = await this.sdk.nft.getPositionFieldsByPositionId(posID);
+    const pos = await this.sdk.nft.getPositionFieldsByPositionId(posId);
 
     const options = {
-      poolId: poolID,
+      poolId: poolId,
       position: pos,
       getPrice: getPriceFunction,
     };
@@ -226,6 +236,7 @@ export class LiquidityService {
         amountB: 0,
         compositionA: 1,
         compositionB: 0,
+        place: 1,
       };
     }
     if ((tick_current_index - tick_upper_index) > 0) {
@@ -235,6 +246,8 @@ export class LiquidityService {
         amountB: 1,
         compositionA: 0,
         compositionB: 1,
+        place: -1,
+
       };
     }
     const span = tick_upper_index - tick_lower_index;
@@ -248,6 +261,7 @@ export class LiquidityService {
       amountB: amountB,
       compositionA: a,
       compositionB: b,
+      place: 0,
     };
   }
 
@@ -262,6 +276,7 @@ export class LiquidityService {
       amountB: amountBase.amountB,
       compositionA: amountBase.compositionA,
       compositionB: amountBase.compositionB,
+      place: amountBase.place,
       price_current: price_current,
       price_lower: price_lower,
       price_upper: price_upper,
@@ -279,6 +294,7 @@ export class LiquidityService {
       amountB: amountBase.amountB,
       compositionA: amountBase.compositionA,
       compositionB: amountBase.compositionB,
+      place: amountBase.place,
       price_current: this.sdk.math.tickIndexToPrice(tick_current_index, decimalsA, decimalsB).toString(),
       price_lower: this.sdk.math.tickIndexToPrice(tick_lower_index, decimalsA, decimalsB).toString(),
       price_upper: this.sdk.math.tickIndexToPrice(tick_upper_index, decimalsA, decimalsB).toString(),
@@ -290,18 +306,3 @@ export class LiquidityService {
 
 }
 
-export interface CalLpTokenAmountBase {
-  amountA: number;
-  amountB: number;
-  compositionA: number,
-  compositionB: number
-}
-
-export interface CalLpTokenAmountResult extends CalLpTokenAmountBase {
-  tick_current_index: number;
-  tick_lower_index: number;
-  tick_upper_index: number;
-  price_current: string;
-  price_lower: string;
-  price_upper: string;
-}

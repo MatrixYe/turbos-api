@@ -1,7 +1,16 @@
 // noinspection SpellCheckingInspection
 
-import { Controller, Get, HttpException, HttpStatus, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, HttpException, HttpStatus, Post, Query } from "@nestjs/common";
 import { LiquidityService } from "./liquidity.service";
+
+class AddLiquidityDto {
+  poolId: string;
+  amountA: number | string;
+  amountB: number | string;
+  tickLower: number;
+  tickUpper: number;
+  slippage: string;
+}
 
 @Controller("liquidity")
 export class LiquidityController {
@@ -29,11 +38,11 @@ export class LiquidityController {
 
   // 获取仓位详情
   @Get("getPositionByID")
-  getPositionByID(@Query("nftID") nftID?: string, @Query("posID") posID?: string) {
-    if (!nftID && !posID) {
+  getPositionByID(@Query("nftId") nftId?: string, @Query("posId") posId?: string) {
+    if (!nftId && !posId) {
       throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
     }
-    return this.server.getPositionByID(nftID, posID);
+    return this.server.getPositionByID(nftId, posId);
   }
 
   // 计算代币数量by流动性
@@ -55,18 +64,14 @@ export class LiquidityController {
   }
 
   @Get("getUnclaimedFeesAndRewards")
-  getUnclaimedFeesAndRewards(@Query("poolID") poolID: string,
-                             @Query("posID") posID: string) {
-    if (!poolID || !posID) {
+  getUnclaimedFeesAndRewards(@Query("poolId") poolId: string,
+                             @Query("posId") posId: string) {
+    if (!poolId || !posId) {
       throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
     }
-    return this.server.getUnclaimedFeesAndRewards(poolID, posID);
+    return this.server.getUnclaimedFeesAndRewards(poolId, posId);
   }
 
-  @Post("addLiquidity")
-  addLiquidity() {
-    return this.server.addLiquidity();
-  }
 
   @Get("calLpTokenAmountByPrice")
   calLpTokenAmountByPrice(@Query("price_current") price_current: string,
@@ -92,4 +97,21 @@ export class LiquidityController {
     // tick_current_index: number, tick_lower_index: number, tick_upper_index: number, decimalsA: number, decimalsB: number
     return this.server.calLpTokenAmountByTicks(Number(tick_current_index), Number(tick_lower_index), Number(tick_upper_index), Number(decimalsA), Number(decimalsB));
   }
+
+  @Post("addLiquidity")
+  addLiquidity(@Body() args: AddLiquidityDto) {
+    //
+    const poolId = args.poolId;
+    const amountA = args.amountA;
+    const amountB = args.amountB;
+    const tickLower = args.tickLower;
+    const tickUpper = args.tickUpper;
+    const slippage = args.slippage;
+    // poolId: string, amountA: number | string, amountB: number | string, tickLower: number, tickUpper: number, slippage: string
+    if (!poolId || !amountA || !amountB || !tickLower || !tickUpper) {
+      throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
+    }
+    return this.server.addLiquidity(poolId, amountA, amountB, tickLower, tickUpper, slippage);
+  }
 }
+
