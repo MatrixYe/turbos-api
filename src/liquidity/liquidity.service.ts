@@ -169,18 +169,59 @@ export class LiquidityService {
     });
   }
 
+  protected bitToSqrt(num: number) {
+    const tickindex = this.sdk.math.bitsToNumber(num);
+    return this.sdk.math.tickIndexToSqrtPriceX64(tickindex);
+  }
+
   // 移除流动性
-  async removeLiquidity() {
+  async removeLiquidity(poolId: string, nftId: string, posId: string, slippage: string) {
+    // 获取仓位信息
+    const position = await this.sdk.nft.getPositionFieldsByPositionId(posId);
+    // 获取池子信息
+    const pool = await this.sdk.pool.getPool(poolId);
+    // 计算a,b代币数量by 仓位流动性
+
+    const [a, b] = this.sdk.pool.getTokenAmountsFromLiquidity({
+      liquidity: new BN(position.liquidity),
+      currentSqrtPrice: new BN(pool.sqrt_price),
+      lowerSqrtPrice: this.bitToSqrt(position.tick_lower_index.fields.bits),
+      upperSqrtPrice: this.bitToSqrt(position.tick_upper_index.fields.bits),
+    });
+
+    const feesAndRewards = await this.sdk.nft.getUnclaimedFeesAndRewards({
+      poolId: poolId,
+      position: position,
+      getPrice: getPriceFunction,
+    });
+    // 计算手续费收益
+    const collectAmountA = feesAndRewards.fields.feeOwedA;
+    const collectAmountB = feesAndRewards.fields.feeOwedB;
+    // 计算rewards收益
+    const rewards = feesAndRewards.fields.collectRewards;
     await this.sdk.pool.removeLiquidity({
-      address: "",
+      address: this.sender,
+      amountA: a.toString(),
+      amountB: b.toString(),
+      collectAmountA: collectAmountA,
+      collectAmountB: collectAmountB,
+      decreaseLiquidity: position.liquidity,
+      nft: nftId,
+      pool: poolId,
+      rewardAmounts: rewards,
+      slippage: slippage,
+    });
+  }
+
+  // 减少流动性
+  async decreaseLiquidity(poolId: string, nftId: string) {
+    await this.sdk.pool.decreaseLiquidity({
+      address: this.sender,
       amountA: undefined,
       amountB: undefined,
-      collectAmountA: undefined,
-      collectAmountB: undefined,
       decreaseLiquidity: undefined,
       nft: "",
       pool: "",
-      rewardAmounts: [],
       slippage: undefined,
     });
   }
@@ -191,19 +232,6 @@ export class LiquidityService {
       address: "",
       amountA: undefined,
       amountB: undefined,
-      nft: "",
-      pool: "",
-      slippage: undefined,
-    });
-  }
-
-  // 减少流动性
-  async decreaseLiquidity() {
-    await this.sdk.pool.decreaseLiquidity({
-      address: "",
-      amountA: undefined,
-      amountB: undefined,
-      decreaseLiquidity: undefined,
       nft: "",
       pool: "",
       slippage: undefined,
