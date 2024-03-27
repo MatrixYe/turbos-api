@@ -181,7 +181,6 @@ export class LiquidityService {
     // 获取池子信息
     const pool = await this.sdk.pool.getPool(poolId);
     // 计算a,b代币数量by 仓位流动性
-
     const [a, b] = this.sdk.pool.getTokenAmountsFromLiquidity({
       liquidity: new BN(position.liquidity),
       currentSqrtPrice: new BN(pool.sqrt_price),
@@ -189,6 +188,7 @@ export class LiquidityService {
       upperSqrtPrice: this.bitToSqrt(position.tick_upper_index.fields.bits),
     });
 
+    // 获取未领取的奖励
     const feesAndRewards = await this.sdk.nft.getUnclaimedFeesAndRewards({
       poolId: poolId,
       position: position,
@@ -199,7 +199,7 @@ export class LiquidityService {
     const collectAmountB = feesAndRewards.fields.feeOwedB;
     // 计算rewards收益
     const rewards = feesAndRewards.fields.collectRewards;
-    await this.sdk.pool.removeLiquidity({
+    return await this.sdk.pool.removeLiquidity({
       address: this.sender,
       amountA: a.toString(),
       amountB: b.toString(),
