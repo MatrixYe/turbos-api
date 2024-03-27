@@ -199,7 +199,7 @@ export class LiquidityService {
     const collectAmountB = feesAndRewards.fields.feeOwedB;
     // 计算rewards收益
     const rewards = feesAndRewards.fields.collectRewards;
-    return await this.sdk.pool.removeLiquidity({
+    const txb = await this.sdk.pool.removeLiquidity({
       address: this.sender,
       amountA: a.toString(),
       amountB: b.toString(),
@@ -210,6 +210,15 @@ export class LiquidityService {
       pool: poolId,
       rewardAmounts: rewards,
       slippage: slippage,
+    });
+
+    return await this.sdk.provider.signAndExecuteTransactionBlock({
+      transactionBlock: txb,
+      signer: this.keypair,
+      requestType: "WaitForLocalExecution",
+      options: {
+        showEffects: true,
+      },
     });
   }
 
