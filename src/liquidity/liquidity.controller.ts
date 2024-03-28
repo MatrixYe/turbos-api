@@ -19,6 +19,13 @@ class RemoveLiquidityDto {
   slippage: string;
 }
 
+class DecreaseLiquidityDto {
+  poolId: string;
+  nftId: string;
+  liquidity: string;
+  slippage: string;
+}
+
 @Controller("liquidity")
 export class LiquidityController {
   constructor(private server: LiquidityService) {
@@ -131,8 +138,17 @@ export class LiquidityController {
     if (!poolId || !nftId || !posId || !slippage) {
       throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
     }
-
     return this.server.removeLiquidity(poolId, nftId, posId, slippage);
+  }
+
+  @Post("decreaseLiquidity")
+  decreaseLiquidity(@Body() args: DecreaseLiquidityDto) {
+    const poolId = args.poolId;
+    const nftId = args.nftId;
+    const liquidity = args.liquidity;
+    const slippage = args.slippage;
+    // poolId: string, nftId: string, liquidity: string, slippage: string
+    return this.server.decreaseLiquidity(poolId, nftId, liquidity, slippage);
   }
 }
 

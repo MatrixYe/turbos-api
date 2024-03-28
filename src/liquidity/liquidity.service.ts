@@ -223,28 +223,59 @@ export class LiquidityService {
   }
 
   // 减少流动性
-  async decreaseLiquidity(poolId: string, nftId: string) {
-    await this.sdk.pool.decreaseLiquidity({
+  async decreaseLiquidity(poolId: string, nftId: string, liquidity: string, slippage: string) {
+    const position = await this.sdk.nft.getPositionFields(nftId);
+    const pool = await this.sdk.pool.getPool(poolId);
+
+    // 计算a,b代币数量by 仓位流动性
+    const [a, b] = this.sdk.pool.getTokenAmountsFromLiquidity({
+      liquidity: new BN(liquidity),
+      currentSqrtPrice: new BN(pool.sqrt_price),
+      lowerSqrtPrice: this.bitToSqrt(position.tick_lower_index.fields.bits),
+      upperSqrtPrice: this.bitToSqrt(position.tick_upper_index.fields.bits),
+    });
+
+
+    const txb = await this.sdk.pool.decreaseLiquidity({
       address: this.sender,
-      amountA: undefined,
-      amountB: undefined,
-      decreaseLiquidity: undefined,
-      nft: "",
-      pool: "",
-      slippage: undefined,
+      amountA: a.toString(),
+      amountB: b.toString(),
+      decreaseLiquidity: liquidity,
+      nft: nftId,
+      pool: poolId,
+      slippage: slippage,
+    });
+
+    return await this.sdk.provider.signAndExecuteTransactionBlock({
+      transactionBlock: txb,
+      signer: this.keypair,
+      requestType: "WaitForLocalExecution",
+      options: {
+        showEffects: true,
+      },
     });
   }
 
   // 增加流动性
-  async increaseLiquidity() {
-    await this.sdk.pool.increaseLiquidity({
-      address: "",
-      amountA: undefined,
-      amountB: undefined,
-      nft: "",
-      pool: "",
-      slippage: undefined,
+  async increaseLiquidity(poolId: string, nftId: string, amountA: string, amountB: string, slippage: string) {
+    const txb = await this.sdk.pool.increaseLiquidity({
+      address: this.sender,
+      amountA: amountA,
+      amountB: amountB,
+      nft: nftId,
+      pool: poolId,
+      slippage: slippage,
     });
+
+    return await this.sdk.provider.signAndExecuteTransactionBlock({
+      transactionBlock: txb,
+      signer: this.keypair,
+      requestType: "WaitForLocalExecution",
+      options: {
+        showEffects: true,
+      },
+    });
+
   }
 
 
