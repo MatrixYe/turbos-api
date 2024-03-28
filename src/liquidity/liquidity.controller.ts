@@ -26,6 +26,14 @@ class DecreaseLiquidityDto {
   slippage: string;
 }
 
+class IncreaseLiquidityDto {
+  poolId: string;
+  nftId: string;
+  amountA: string;
+  amountB: string;
+  slippage: string;
+}
+
 @Controller("liquidity")
 export class LiquidityController {
   constructor(private server: LiquidityService) {
@@ -147,8 +155,26 @@ export class LiquidityController {
     const nftId = args.nftId;
     const liquidity = args.liquidity;
     const slippage = args.slippage;
+    if (!poolId || !nftId || !liquidity || !slippage) {
+      throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
+    }
     // poolId: string, nftId: string, liquidity: string, slippage: string
     return this.server.decreaseLiquidity(poolId, nftId, liquidity, slippage);
+  }
+
+  @Post("increaseLiquidity")
+  increaseLiquidity(@Body() args: IncreaseLiquidityDto) {
+    // poolId: string, nftId: string, amountA: string, amountB: string, slippage: string
+    const poolId = args.poolId;
+    const nftId = args.nftId;
+    const amountA = args.amountA;
+    const amountB = args.amountB;
+    const slippage = args.slippage;
+
+    if (!poolId || !nftId || !amountA || !amountB || !slippage) {
+      throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
+    }
+    return this.server.increaseLiquidity(poolId, nftId, amountA, amountB, slippage);
   }
 }
 
