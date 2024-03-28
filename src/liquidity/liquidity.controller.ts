@@ -67,6 +67,16 @@ export class LiquidityController {
     return this.server.getPositionByID(nftId, posId);
   }
 
+  @Get("getSimplePositionById")
+  getSimplePositionById(@Query("nftId") nftId: string,
+                        @Query("posId") posId: string,
+                        @Query("decimalsA") decimalsA: number,
+                        @Query("decimalsB") decimalsB: number,
+                        @Query("currentSqrtPrice") currentSqrtPrice?: string) {
+    // nftId: string, posId: string, decimalsA: number, decimalsB: number, currentSqrtPrice: string
+    return this.server.getSimplePositionById(nftId, posId, decimalsA, decimalsB, currentSqrtPrice);
+  }
+
   // 计算代币数量by流动性
   @Get("getTokenAmountsFromLiquidity")
   getTokenAmountsFromLiquidity(@Query("liquidity") liquidity: string,

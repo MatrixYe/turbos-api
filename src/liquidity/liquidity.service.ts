@@ -63,6 +63,33 @@ export class LiquidityService {
     };
   }
 
+  protected bitToSqrtPriceBN(num: number): BN {
+    const tickindex = this.sdk.math.bitsToNumber(num);
+    return this.sdk.math.tickIndexToSqrtPriceX64(tickindex);
+  }
+
+  protected bitToPrice(num: number, decimalsA: number, decimalsB: number): string {
+    const tickindex = this.sdk.math.bitsToNumber(num);
+    return this.sdk.math.tickIndexToPrice(tickindex, decimalsA, decimalsB).toString();
+
+
+  }
+
+  protected bitToTickIndex(num: number): number {
+    return this.sdk.math.bitsToNumber(num);
+  }
+
+  protected tickIndexToPrice(tickIndex, decimalsA: number, decimalsB: number) {
+    return this.sdk.math.tickIndexToPrice(tickIndex, decimalsA, decimalsB);
+  }
+
+  protected bitToAny(num: number, decimalsA: number, decimalsB: number): [number, BN, string] {
+    const tickIndex = this.sdk.math.bitsToNumber(num);
+    const sqrtPriceX64 = this.sdk.math.tickIndexToSqrtPriceX64(tickIndex);
+    const price = this.sdk.math.tickIndexToPrice(tickIndex, decimalsA, decimalsB).toString();
+    return [tickIndex, sqrtPriceX64, price];
+  }
+
   async getPositionIDsByOwner(owner: string, cursor?: string) {
     const results = await this.sdk.provider.getOwnedObjects(
       {
@@ -117,6 +144,42 @@ export class LiquidityService {
   }
 
 
+  async getSimplePositionById(nftId: string, posId: string, decimalsA: number, decimalsB: number, currentSqrtPrice: string) {
+    const pos = await this.getPositionByID(nftId, posId);
+    const [lower_tickIndex, lower_sqrtPriceX64, lower_price] = this.bitToAny(pos.tick_lower_index.fields.bits, decimalsA, decimalsB);
+    const [upper_tickIndex, upper_sqrtPriceX64, upper_price] = this.bitToAny(pos.tick_upper_index.fields.bits, decimalsA, decimalsB);
+    let amountA, amountB;
+    let scaledAmountA, scaledAmountB;
+    if (currentSqrtPrice) {
+      const [a, b] = this.sdk.pool.getTokenAmountsFromLiquidity({
+        currentSqrtPrice: new BN(currentSqrtPrice),
+        liquidity: new BN(pos.liquidity),
+        lowerSqrtPrice: lower_sqrtPriceX64,
+        upperSqrtPrice: upper_sqrtPriceX64,
+      });
+      amountA = a.toString();
+      amountB = b.toString();
+      scaledAmountA = this.sdk.math.scaleDown(amountA, decimalsA);
+      scaledAmountB = this.sdk.math.scaleDown(amountB, decimalsB);
+    }
+
+    return {
+      "nftId": nftId,
+      "posId": pos.id.id,
+      "liquidity": pos.liquidity,
+      "tick_lower_index": lower_tickIndex,
+      "tick_upper_index": upper_tickIndex,
+      "price_lower": lower_price,
+      "price_upper": upper_price,
+      "sqrt_price_lower": lower_sqrtPriceX64.toString(),
+      "sqrt_price_upper": upper_sqrtPriceX64.toString(),
+      "amountA": amountA,
+      "amountB": amountB,
+      "scaledAmountA": scaledAmountA,
+      "scaledAmountB": scaledAmountB,
+    };
+  }
+
   // 获取仓位详情
   async getPositionByID(nftId: string, posId: string) {
     if (nftId != null && nftId != "") {
@@ -169,10 +232,6 @@ export class LiquidityService {
     });
   }
 
-  protected bitToSqrt(num: number) {
-    const tickindex = this.sdk.math.bitsToNumber(num);
-    return this.sdk.math.tickIndexToSqrtPriceX64(tickindex);
-  }
 
   // 移除流动性
   async removeLiquidity(poolId: string, nftId: string, posId: string, slippage: string) {
@@ -184,8 +243,8 @@ export class LiquidityService {
     const [a, b] = this.sdk.pool.getTokenAmountsFromLiquidity({
       liquidity: new BN(position.liquidity),
       currentSqrtPrice: new BN(pool.sqrt_price),
-      lowerSqrtPrice: this.bitToSqrt(position.tick_lower_index.fields.bits),
-      upperSqrtPrice: this.bitToSqrt(position.tick_upper_index.fields.bits),
+      lowerSqrtPrice: this.bitToSqrtPriceBN(position.tick_lower_index.fields.bits),
+      upperSqrtPrice: this.bitToSqrtPriceBN(position.tick_upper_index.fields.bits),
     });
 
     // 获取未领取的奖励
@@ -231,8 +290,8 @@ export class LiquidityService {
     const [a, b] = this.sdk.pool.getTokenAmountsFromLiquidity({
       liquidity: new BN(liquidity),
       currentSqrtPrice: new BN(pool.sqrt_price),
-      lowerSqrtPrice: this.bitToSqrt(position.tick_lower_index.fields.bits),
-      upperSqrtPrice: this.bitToSqrt(position.tick_upper_index.fields.bits),
+      lowerSqrtPrice: this.bitToSqrtPriceBN(position.tick_lower_index.fields.bits),
+      upperSqrtPrice: this.bitToSqrtPriceBN(position.tick_upper_index.fields.bits),
     });
 
 
