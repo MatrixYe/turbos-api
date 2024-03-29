@@ -12,6 +12,15 @@ class AddLiquidityDto {
   slippage: string;
 }
 
+class AddLiquidityDto2 {
+  poolId: string;
+  tickLower: number;
+  tickUpper: number;
+  slippage: string;
+  coinAmount: string;
+  isCoinA: boolean;
+}
+
 class RemoveLiquidityDto {
   poolId: string;
   nftId: string;
@@ -185,6 +194,24 @@ export class LiquidityController {
       throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
     }
     return this.server.increaseLiquidity(poolId, nftId, amountA, amountB, slippage);
+  }
+
+
+//
+  @Post("addLiquidity2")
+  addLiquidity2(@Body() args: AddLiquidityDto2) {
+    // poolId: string, tickLower: number, tickUpper: number, slippage: string, coinAmount: string, isCoinA: boolean
+    const poolId = args.poolId;
+    const tickLower = args.tickLower;
+    const tickUpper = args.tickUpper;
+    const slippage = args.slippage;
+    const coinAmount = args.coinAmount;
+    const isCoinA = args.isCoinA;
+
+    if (!poolId || !tickLower || !tickUpper || !coinAmount) {
+      throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
+    }
+    return this.server.addLiquidity2(poolId, tickLower, tickUpper, slippage, coinAmount, isCoinA);
   }
 }
 

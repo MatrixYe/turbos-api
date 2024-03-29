@@ -8,6 +8,58 @@ import { SuiClient } from "@mysten/sui.js/client";
 import { HttpService } from "@nestjs/axios";
 import { map } from "rxjs/operators";
 
+function fromX64_BN(num: BN): BN {
+  return num.div(new BN(2).pow(new BN(64)));
+}
+
+function estimateLiquidityForCoinB(sqrtPriceX: BN, sqrtPriceY: BN, coinAmount: BN) {
+  const lowerSqrtPriceX64 = BN.min(sqrtPriceX, sqrtPriceY);
+  const upperSqrtPriceX64 = BN.max(sqrtPriceX, sqrtPriceY);
+  const delta = upperSqrtPriceX64.sub(lowerSqrtPriceX64);
+  return coinAmount.shln(64).div(delta);
+}
+
+export function estimateLiquidityForCoinA(sqrtPriceX: BN, sqrtPriceY: BN, coinAmount: BN) {
+  const lowerSqrtPriceX64 = BN.min(sqrtPriceX, sqrtPriceY);
+  const upperSqrtPriceX64 = BN.max(sqrtPriceX, sqrtPriceY);
+  const num = fromX64_BN(coinAmount.mul(upperSqrtPriceX64).mul(lowerSqrtPriceX64));
+  const dem = upperSqrtPriceX64.sub(lowerSqrtPriceX64);
+  return num.div(dem);
+}
+
+export enum MathErrorCode {
+  IntegerDowncastOverflow = `IntegerDowncastOverflow`,
+  MulOverflow = `MultiplicationOverflow`,
+  MulDivOverflow = `MulDivOverflow`,
+  MulShiftRightOverflow = `MulShiftRightOverflow`,
+  MulShiftLeftOverflow = `MulShiftLeftOverflow`,
+  DivideByZero = `DivideByZero`,
+  UnsignedIntegerOverflow = `UnsignedIntegerOverflow`,
+  InvalidCoinAmount = `InvalidCoinAmount`,
+  InvalidLiquidityAmount = `InvalidLiquidityAmount`,
+  InvalidReserveAmount = `InvalidReserveAmount`,
+  InvalidSqrtPrice = `InvalidSqrtPrice`,
+  NotSupportedThisCoin = `NotSupportedThisCoin`,
+  InvalidTwoTickIndex = `InvalidTwoTickIndex`,
+}
+
+export class ClmmpoolsError extends Error {
+  override message: string;
+
+  errorCode?: MathErrorCode;
+
+  constructor(message: string, errorCode?: MathErrorCode) {
+    super(message);
+    this.message = message;
+    this.errorCode = errorCode;
+  }
+
+  static isClmmpoolsErrorCode(e: any, code: MathErrorCode): boolean {
+    return e instanceof ClmmpoolsError && e.errorCode === code;
+  }
+}
+
+
 export interface CalLpTokenAmountBase {
   amountA: number;
   amountB: number;
@@ -150,9 +202,14 @@ export class LiquidityService {
     const [upper_tickIndex, upper_sqrtPriceX64, upper_price] = this.bitToAny(pos.tick_upper_index.fields.bits, decimalsA, decimalsB);
     let amountA, amountB;
     let scaledAmountA, scaledAmountB;
+    let current_tick_index;
+    let current_price;
     if (currentSqrtPrice) {
+      const sqrtP = new BN(currentSqrtPrice);
+      current_tick_index = this.sdk.math.sqrtPriceX64ToTickIndex(sqrtP);
+      current_price = this.sdk.math.sqrtPriceX64ToPrice(sqrtP, decimalsA, decimalsB).toString();
       const [a, b] = this.sdk.pool.getTokenAmountsFromLiquidity({
-        currentSqrtPrice: new BN(currentSqrtPrice),
+        currentSqrtPrice: sqrtP,
         liquidity: new BN(pos.liquidity),
         lowerSqrtPrice: lower_sqrtPriceX64,
         upperSqrtPrice: upper_sqrtPriceX64,
@@ -169,10 +226,13 @@ export class LiquidityService {
       "liquidity": pos.liquidity,
       "tick_lower_index": lower_tickIndex,
       "tick_upper_index": upper_tickIndex,
+      "current_tick_index": current_tick_index,
       "price_lower": lower_price,
       "price_upper": upper_price,
+      "current_price": current_price,
       "sqrt_price_lower": lower_sqrtPriceX64.toString(),
       "sqrt_price_upper": upper_sqrtPriceX64.toString(),
+      "currentSqrtPrice": currentSqrtPrice,
       "amountA": amountA,
       "amountB": amountB,
       "scaledAmountA": scaledAmountA,
@@ -206,30 +266,6 @@ export class LiquidityService {
       upperSqrtPrice: upperSqrtPrice,
     });
     return [amountA.toString(), amountB.toString(), tick_lower_index, tick_upper_index];
-  }
-
-
-  async addLiquidity(poolId: string, amountA: number | string, amountB: number | string, tickLower: number, tickUpper: number, slippage: string) {
-    /***
-     *
-     */
-    const txb = await this.sdk.pool.addLiquidity({
-      address: this.sender,
-      amountA: amountA,
-      amountB: amountB,
-      pool: poolId,
-      slippage: slippage,
-      tickLower: tickLower,
-      tickUpper: tickUpper,
-    });
-    return await this.sdk.provider.signAndExecuteTransactionBlock({
-      transactionBlock: txb,
-      signer: this.keypair,
-      requestType: "WaitForLocalExecution",
-      options: {
-        showEffects: true,
-      },
-    });
   }
 
 
@@ -431,5 +467,112 @@ export class LiquidityService {
     };
   }
 
+
+  estLiquidity(
+    lowerTick: number,
+    upperTick: number,
+    coinAmount: BN,
+    iscoinA: boolean,
+    roundUp: boolean,
+    slippage: number,
+    curSqrtPrice: BN,
+  ): BN {
+    const currentTick = this.sdk.math.sqrtPriceX64ToTickIndex(curSqrtPrice);
+    const lowerSqrtPrice = this.sdk.math.tickIndexToSqrtPriceX64(lowerTick);
+    const upperSqrtPrice = this.sdk.math.tickIndexToSqrtPriceX64(upperTick);
+    let liquidity: BN;
+    if (currentTick < lowerTick) {
+      if (!iscoinA) {
+        throw new ClmmpoolsError("lower tick cannot calculate liquidity by coinB", MathErrorCode.NotSupportedThisCoin);
+      }
+      liquidity = estimateLiquidityForCoinA(lowerSqrtPrice, upperSqrtPrice, coinAmount);
+    } else if (currentTick > upperTick) {
+      if (iscoinA) {
+        throw new ClmmpoolsError("upper tick cannot calculate liquidity by coinA", MathErrorCode.NotSupportedThisCoin);
+      }
+      liquidity = estimateLiquidityForCoinB(upperSqrtPrice, lowerSqrtPrice, coinAmount);
+    } else if (iscoinA) {
+      liquidity = estimateLiquidityForCoinA(curSqrtPrice, upperSqrtPrice, coinAmount);
+    } else {
+      liquidity = estimateLiquidityForCoinB(curSqrtPrice, lowerSqrtPrice, coinAmount);
+    }
+    return liquidity;
+
+  }
+
+  estTokenAmount(lowerTick: number,
+                 upperTick: number,
+                 coinAmount: string,
+                 iscoinA: boolean,
+                 slippage: string,
+                 curSqrtPrice: string) {
+    // lowerTick: number,
+    //     upperTick: number,
+    //     coinAmount: BN,
+    //     iscoinA: boolean,
+    //     roundUp: boolean,
+    //     slippage: number,
+    //     curSqrtPrice: BN,
+    const liquidity = this.estLiquidity(lowerTick, upperTick, new BN(coinAmount), iscoinA, true, Number(slippage), new BN(curSqrtPrice));
+    const lowerSqrtPrice = this.sdk.math.tickIndexToSqrtPriceX64(lowerTick);
+    const upperSqrtPrice = this.sdk.math.tickIndexToSqrtPriceX64(upperTick);
+    const [a, b] = this.sdk.pool.getTokenAmountsFromLiquidity({
+      currentSqrtPrice: new BN(curSqrtPrice),
+      liquidity: liquidity,
+      lowerSqrtPrice: lowerSqrtPrice,
+      upperSqrtPrice: upperSqrtPrice,
+    });
+    return [a.toString(), b.toString()];
+  }
+
+  async addLiquidity(poolId: string, amountA: number | string, amountB: number | string, tickLower: number, tickUpper: number, slippage: string) {
+    /***
+     *
+     */
+    const txb = await this.sdk.pool.addLiquidity({
+      address: this.sender,
+      amountA: amountA,
+      amountB: amountB,
+      pool: poolId,
+      slippage: slippage,
+      tickLower: tickLower,
+      tickUpper: tickUpper,
+    });
+    return await this.sdk.provider.signAndExecuteTransactionBlock({
+      transactionBlock: txb,
+      signer: this.keypair,
+      requestType: "WaitForLocalExecution",
+      options: {
+        showEffects: true,
+      },
+    });
+  }
+
+  // 流动性开仓2
+  async addLiquidity2(poolId: string, tickLower: number, tickUpper: number, slippage: string, coinAmount: string, isCoinA: boolean) {
+    const pool = await this.sdk.pool.getPool(poolId);
+    const curSqrtPrice = pool.sqrt_price;
+    //   计算流动性量
+    const [amountA, amountB] = this.estTokenAmount(tickLower, tickUpper, coinAmount, isCoinA, slippage, curSqrtPrice);
+    // console.log(`amountA ${amountA}`);
+    // console.log(`amountB ${amountB}`);
+    const txb = await this.sdk.pool.addLiquidity({
+      address: this.sender,
+      amountA: amountA,
+      amountB: amountB,
+      pool: poolId,
+      slippage: slippage,
+      tickLower: tickLower,
+      tickUpper: tickUpper,
+    });
+    return await this.sdk.provider.signAndExecuteTransactionBlock({
+      transactionBlock: txb,
+      signer: this.keypair,
+      requestType: "WaitForLocalExecution",
+      options: {
+        showEffects: true,
+      },
+    });
+  }
 }
 

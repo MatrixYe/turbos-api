@@ -8,6 +8,7 @@ build:
 ## 生产环境
 prod:
 	echo 'start'
+	npm install
 	npm run build
 	npm run start:prod
 
