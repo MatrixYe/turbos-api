@@ -1,14 +1,19 @@
 import { Body, Controller, HttpException, HttpStatus, Post } from "@nestjs/common";
 import { SwapService } from "./swap.service";
+import { IsBoolean, IsNotEmpty } from "class-validator";
+import { Transform } from "class-transformer";
 
 class ToSwapDto {
   poolId: string;
   coinTypeA: string;
   coinTypeB: string;
+  @IsNotEmpty()
+  @Transform(({ value }) => value === "true") // 转换字符串为布尔值
+  @IsBoolean()
   a2b: boolean = true;
   amountSpecifiedIsInput: boolean = true;
   amount: string | number;
-  slippage?: string = "5";
+  slippage?: string = "2";
 }
 
 @Controller("swap")
