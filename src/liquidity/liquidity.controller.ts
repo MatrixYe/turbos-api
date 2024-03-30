@@ -1,7 +1,10 @@
 // noinspection SpellCheckingInspection
+import { Transform } from "class-transformer";
+import { IsBoolean, IsNotEmpty } from "class-validator";
 
 import { Body, Controller, Get, HttpException, HttpStatus, Post, Query } from "@nestjs/common";
 import { LiquidityService } from "./liquidity.service";
+import { ParseBoolPipe } from "../parse-bool.pipe";
 
 class AddLiquidityDto {
   poolId: string;
@@ -18,6 +21,9 @@ class AddLiquidityDto2 {
   tickUpper: number;
   slippage: string;
   coinAmount: string;
+  @IsNotEmpty()
+  @Transform(({ value }) => value === "true") // 转换字符串为布尔值
+  @IsBoolean()
   isCoinA: boolean;
 }
 
@@ -114,31 +120,6 @@ export class LiquidityController {
   }
 
 
-  @Get("calLpTokenAmountByPrice")
-  calLpTokenAmountByPrice(@Query("price_current") price_current: string,
-                          @Query("price_lower") price_lower: string,
-                          @Query("price_upper") price_upper: string,
-                          @Query("decimalsA") decimalsA: number,
-                          @Query("decimalsB") decimalsB: number) {
-    if (!price_current || !price_lower || !price_upper || !decimalsA || !decimalsB) {
-      throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
-    }
-    return this.server.calLpTokenAmountByPrice(price_current, price_lower, price_upper, Number(decimalsA), Number(decimalsB));
-  }
-
-  @Get("calLpTokenAmountByTicks")
-  calLpTokenAmountByTicks(@Query("tick_current_index") tick_current_index: string,
-                          @Query("tick_lower_index") tick_lower_index: number,
-                          @Query("tick_upper_index") tick_upper_index: number,
-                          @Query("decimalsA") decimalsA: number,
-                          @Query("decimalsB") decimalsB: number) {
-    if (!tick_current_index || !tick_lower_index || !tick_upper_index || !decimalsA || !decimalsB) {
-      throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
-    }
-    // tick_current_index: number, tick_lower_index: number, tick_upper_index: number, decimalsA: number, decimalsB: number
-    return this.server.calLpTokenAmountByTicks(Number(tick_current_index), Number(tick_lower_index), Number(tick_upper_index), Number(decimalsA), Number(decimalsB));
-  }
-
   @Post("addLiquidity")
   addLiquidity(@Body() args: AddLiquidityDto) {
     //
@@ -211,7 +192,29 @@ export class LiquidityController {
     if (!poolId || !tickLower || !tickUpper || !coinAmount) {
       throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
     }
-    return this.server.addLiquidity2(poolId, tickLower, tickUpper, slippage, coinAmount, isCoinA);
+    console.log(`isCoinA ${isCoinA}`);
+    // return this.server.addLiquidity2(poolId, tickLower, tickUpper, slippage, coinAmount, isCoinA === "true");
+  }
+
+
+  @Get("getTokenAmountByTicks")
+  getTokenAmountByTicks(@Query("lowerTick") lowerTick: number,
+                        @Query("upperTick") upperTick: number,
+                        @Query("coinAmount") coinAmount: string,
+                        @Query("isCoinA", ParseBoolPipe) isCoinA: boolean,
+                        @Query("slippage") slippage: string,
+                        @Query("curSqrtPrice") curSqrtPrice: string) {
+    console.log(`lowerTick ${lowerTick}`);
+    console.log(`upperTick ${upperTick}`);
+    console.log(`coinAmount ${coinAmount}`);
+    console.log(`iscoinA ${isCoinA}`);
+    console.log(`slippage ${slippage}`);
+    console.log(`curSqrtPrice ${curSqrtPrice}`);
+    const [a, b] = this.server.getTokenAmountByTicks(lowerTick, upperTick, coinAmount, isCoinA, slippage, curSqrtPrice);
+    return {
+      "amountA": a,
+      "amountB": b,
+    };
   }
 }
 

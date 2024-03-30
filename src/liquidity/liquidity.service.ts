@@ -8,16 +8,6 @@ import { SuiClient } from "@mysten/sui.js/client";
 import { HttpService } from "@nestjs/axios";
 import { map } from "rxjs/operators";
 
-function fromX64_BN(num: BN): BN {
-  return num.div(new BN(2).pow(new BN(64)));
-}
-
-function estimateLiquidityForCoinB(sqrtPriceX: BN, sqrtPriceY: BN, coinAmount: BN) {
-  const lowerSqrtPriceX64 = BN.min(sqrtPriceX, sqrtPriceY);
-  const upperSqrtPriceX64 = BN.max(sqrtPriceX, sqrtPriceY);
-  const delta = upperSqrtPriceX64.sub(lowerSqrtPriceX64);
-  return coinAmount.shln(64).div(delta);
-}
 
 export function estimateLiquidityForCoinA(sqrtPriceX: BN, sqrtPriceY: BN, coinAmount: BN) {
   const lowerSqrtPriceX64 = BN.min(sqrtPriceX, sqrtPriceY);
@@ -75,6 +65,17 @@ export interface CalLpTokenAmountResult extends CalLpTokenAmountBase {
   price_current: string;
   price_lower: string;
   price_upper: string;
+}
+
+function fromX64_BN(num: BN): BN {
+  return num.div(new BN(2).pow(new BN(64)));
+}
+
+function estimateLiquidityForCoinB(sqrtPriceX: BN, sqrtPriceY: BN, coinAmount: BN) {
+  const lowerSqrtPriceX64 = BN.min(sqrtPriceX, sqrtPriceY);
+  const upperSqrtPriceX64 = BN.max(sqrtPriceX, sqrtPriceY);
+  const delta = upperSqrtPriceX64.sub(lowerSqrtPriceX64);
+  return coinAmount.shln(64).div(delta);
 }
 
 function getPriceFunction(coinType: string): Promise<string | number | undefined> {
@@ -391,83 +392,6 @@ export class LiquidityService {
 
   }
 
-  private calLpTokenAmount(tick_current_index: number, tick_lower_index: number, tick_upper_index: number, decimalsA: number, decimalsB: number): CalLpTokenAmountBase {
-    if ((tick_current_index - tick_lower_index) <= 0) {
-      //当前价不在区间，区间位于右，币种A
-      return {
-        amountA: 1,
-        amountB: 0,
-        compositionA: 1,
-        compositionB: 0,
-        place: 1,
-      };
-    }
-    if ((tick_current_index - tick_upper_index) > 0) {
-      //当前价不在区间，区间位于左侧，币种B
-      return {
-        amountA: 0,
-        amountB: 1,
-        compositionA: 0,
-        compositionB: 1,
-        place: -1,
-
-      };
-    }
-    const span = tick_upper_index - tick_lower_index;
-    const b = (tick_current_index - tick_lower_index) / span;
-    const a = (tick_upper_index - tick_current_index) / span;
-    const price_current = this.sdk.math.tickIndexToPrice(tick_current_index, decimalsA, decimalsB).toNumber();
-    const amountA = 1;
-    const amountB = amountA * price_current / (a / b);
-    return {
-      amountA: amountA,
-      amountB: amountB,
-      compositionA: a,
-      compositionB: b,
-      place: 0,
-    };
-  }
-
-  //预估流动性添加代币数量
-  calLpTokenAmountByPrice(price_current: string, price_lower: string, price_upper: string, decimalsA: number, decimalsB: number): CalLpTokenAmountResult {
-    const tick_current_index = this.sdk.math.priceToTickIndex(price_current, decimalsA, decimalsB);
-    const tick_lower_index = this.sdk.math.priceToTickIndex(price_lower, decimalsA, decimalsB);
-    const tick_upper_index = this.sdk.math.priceToTickIndex(price_upper, decimalsA, decimalsB);
-    const amountBase = this.calLpTokenAmount(tick_current_index, tick_lower_index, tick_upper_index, decimalsA, decimalsB);
-    return {
-      amountA: amountBase.amountA,
-      amountB: amountBase.amountB,
-      compositionA: amountBase.compositionA,
-      compositionB: amountBase.compositionB,
-      place: amountBase.place,
-      price_current: price_current,
-      price_lower: price_lower,
-      price_upper: price_upper,
-      tick_current_index: tick_current_index,
-      tick_lower_index: tick_lower_index,
-      tick_upper_index: tick_upper_index,
-    };
-
-  }
-
-  calLpTokenAmountByTicks(tick_current_index: number, tick_lower_index: number, tick_upper_index: number, decimalsA: number, decimalsB: number): CalLpTokenAmountResult {
-    const amountBase = this.calLpTokenAmount(tick_current_index, tick_lower_index, tick_upper_index, decimalsA, decimalsB);
-    return {
-      amountA: amountBase.amountA,
-      amountB: amountBase.amountB,
-      compositionA: amountBase.compositionA,
-      compositionB: amountBase.compositionB,
-      place: amountBase.place,
-      price_current: this.sdk.math.tickIndexToPrice(tick_current_index, decimalsA, decimalsB).toString(),
-      price_lower: this.sdk.math.tickIndexToPrice(tick_lower_index, decimalsA, decimalsB).toString(),
-      price_upper: this.sdk.math.tickIndexToPrice(tick_upper_index, decimalsA, decimalsB).toString(),
-      tick_current_index: tick_current_index,
-      tick_lower_index: tick_lower_index,
-      tick_upper_index: tick_upper_index,
-    };
-  }
-
-
   estLiquidity(
     lowerTick: number,
     upperTick: number,
@@ -497,7 +421,6 @@ export class LiquidityService {
       liquidity = estimateLiquidityForCoinB(curSqrtPrice, lowerSqrtPrice, coinAmount);
     }
     return liquidity;
-
   }
 
   estTokenAmount(lowerTick: number,
@@ -506,13 +429,7 @@ export class LiquidityService {
                  iscoinA: boolean,
                  slippage: string,
                  curSqrtPrice: string) {
-    // lowerTick: number,
-    //     upperTick: number,
-    //     coinAmount: BN,
-    //     iscoinA: boolean,
-    //     roundUp: boolean,
-    //     slippage: number,
-    //     curSqrtPrice: BN,
+
     const liquidity = this.estLiquidity(lowerTick, upperTick, new BN(coinAmount), iscoinA, true, Number(slippage), new BN(curSqrtPrice));
     const lowerSqrtPrice = this.sdk.math.tickIndexToSqrtPriceX64(lowerTick);
     const upperSqrtPrice = this.sdk.math.tickIndexToSqrtPriceX64(upperTick);
@@ -573,6 +490,15 @@ export class LiquidityService {
         showEffects: true,
       },
     });
+  }
+
+   getTokenAmountByTicks(lowerTick: number,
+                              upperTick: number,
+                              coinAmount: string,
+                              iscoinA: boolean,
+                              slippage: string,
+                              curSqrtPrice: string) {
+    return this.estTokenAmount(lowerTick, upperTick, coinAmount, iscoinA, slippage, curSqrtPrice);
   }
 }
 
