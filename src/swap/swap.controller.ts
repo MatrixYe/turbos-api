@@ -11,6 +11,9 @@ class ToSwapDto {
   @Transform(({ value }) => value === "true") // 转换字符串为布尔值
   @IsBoolean()
   a2b: boolean = true;
+  @IsNotEmpty()
+  @Transform(({ value }) => value === "true") // 转换字符串为布尔值
+  @IsBoolean()
   amountSpecifiedIsInput: boolean = true;
   amount: string | number;
   slippage?: string = "2";

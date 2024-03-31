@@ -60,7 +60,7 @@ export class SwapService {
       slippage: slippage,//滑点，百分比形式
     });
 
-    return await this.sdk.provider.signAndExecuteTransactionBlock({
+    const result = await this.sdk.provider.signAndExecuteTransactionBlock({
       transactionBlock: txb,
       signer: this.keypair,
       requestType: "WaitForLocalExecution",
@@ -68,6 +68,18 @@ export class SwapService {
         showEffects: true,
       },
     });
-
+    return {
+      "input": {
+        "address": this.sender,
+        "coinTypeA": coinTypeA,
+        "coinTypeB": coinTypeB,
+        "amountA": amountA,
+        "amountB": amountB,
+        "poolId": poolId,
+        "a2b": a2b,
+        "slippage": slippage,
+      },
+      "output": result,
+    };
   }
 }

@@ -308,7 +308,7 @@ export class LiquidityService {
       slippage: slippage,
     });
 
-    return await this.sdk.provider.signAndExecuteTransactionBlock({
+    const result = await this.sdk.provider.signAndExecuteTransactionBlock({
       transactionBlock: txb,
       signer: this.keypair,
       requestType: "WaitForLocalExecution",
@@ -316,6 +316,21 @@ export class LiquidityService {
         showEffects: true,
       },
     });
+    return {
+      "input": {
+        "address": this.sender,
+        "amountA": a.toString(),
+        "amountB": b.toString(),
+        "poolId": poolId,
+        "slippage": slippage,
+        "collectAmountA": collectAmountA,
+        "collectAmountB": collectAmountB,
+        "decreaseLiquidity": position.liquidity,
+        "nftId": nftId,
+        "rewards": rewards,
+      },
+      "output": result,
+    };
   }
 
   // 减少流动性
@@ -455,7 +470,7 @@ export class LiquidityService {
       tickLower: tickLower,
       tickUpper: tickUpper,
     });
-    return await this.sdk.provider.signAndExecuteTransactionBlock({
+    const result = await this.sdk.provider.signAndExecuteTransactionBlock({
       transactionBlock: txb,
       signer: this.keypair,
       requestType: "WaitForLocalExecution",
@@ -463,6 +478,18 @@ export class LiquidityService {
         showEffects: true,
       },
     });
+    return {
+      "input": {
+        "address": this.sender,
+        "amountA": amountA,
+        "amountB": amountB,
+        "poolId": poolId,
+        "slippage": slippage,
+        "tickLower": tickLower,
+        "tickUpper": tickUpper,
+      },
+      "output": result,
+    };
   }
 
   // 流动性开仓2
@@ -482,7 +509,7 @@ export class LiquidityService {
       tickLower: tickLower,
       tickUpper: tickUpper,
     });
-    return await this.sdk.provider.signAndExecuteTransactionBlock({
+    const result = await this.sdk.provider.signAndExecuteTransactionBlock({
       transactionBlock: txb,
       signer: this.keypair,
       requestType: "WaitForLocalExecution",
@@ -490,15 +517,39 @@ export class LiquidityService {
         showEffects: true,
       },
     });
+    return {
+      "input": {
+        "address": this.sender,
+        "amountA": amountA,
+        "amountB": amountB,
+        "poolId": poolId,
+        "slippage": slippage,
+        "tickLower": tickLower,
+        "tickUpper": tickUpper,
+        "curSqrtPrice": curSqrtPrice,
+      },
+      "output": result,
+    };
   }
 
-   getTokenAmountByTicks(lowerTick: number,
-                              upperTick: number,
-                              coinAmount: string,
-                              iscoinA: boolean,
-                              slippage: string,
-                              curSqrtPrice: string) {
-    return this.estTokenAmount(lowerTick, upperTick, coinAmount, iscoinA, slippage, curSqrtPrice);
+  getTokenAmountByTicks(lowerTick: number,
+                        upperTick: number,
+                        coinAmount: string,
+                        iscoinA: boolean,
+                        slippage: string,
+                        curSqrtPrice: string,
+                        decimalsA: number,
+                        decimalsB: number,
+  ) {
+    const [a, b] = this.estTokenAmount(lowerTick, upperTick, coinAmount, iscoinA, slippage, curSqrtPrice);
+    const scaleA = this.sdk.math.scaleDown(a, decimalsA);
+    const scaleB = this.sdk.math.scaleDown(b, decimalsB);
+    return {
+      "amountA": a.toString(),
+      "amountB": b.toString(),
+      "scaleAmountA": scaleA,
+      "scaleAmountB": scaleB,
+    };
   }
 }
 

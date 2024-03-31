@@ -192,8 +192,7 @@ export class LiquidityController {
     if (!poolId || !tickLower || !tickUpper || !coinAmount) {
       throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
     }
-    console.log(`isCoinA ${isCoinA}`);
-    // return this.server.addLiquidity2(poolId, tickLower, tickUpper, slippage, coinAmount, isCoinA === "true");
+    return this.server.addLiquidity2(poolId, tickLower, tickUpper, slippage, coinAmount, isCoinA);
   }
 
 
@@ -203,18 +202,19 @@ export class LiquidityController {
                         @Query("coinAmount") coinAmount: string,
                         @Query("isCoinA", ParseBoolPipe) isCoinA: boolean,
                         @Query("slippage") slippage: string,
-                        @Query("curSqrtPrice") curSqrtPrice: string) {
-    console.log(`lowerTick ${lowerTick}`);
-    console.log(`upperTick ${upperTick}`);
-    console.log(`coinAmount ${coinAmount}`);
-    console.log(`iscoinA ${isCoinA}`);
-    console.log(`slippage ${slippage}`);
-    console.log(`curSqrtPrice ${curSqrtPrice}`);
-    const [a, b] = this.server.getTokenAmountByTicks(lowerTick, upperTick, coinAmount, isCoinA, slippage, curSqrtPrice);
-    return {
-      "amountA": a,
-      "amountB": b,
-    };
+                        @Query("curSqrtPrice") curSqrtPrice: string,
+                        @Query("decimalsA") decimalsA: number,
+                        @Query("decimalsB") decimalsB: number,
+  ) {
+    // console.log(`lowerTick ${lowerTick}`);
+    // console.log(`upperTick ${upperTick}`);
+    // console.log(`coinAmount ${coinAmount}`);
+    // console.log(`iscoinA ${isCoinA}`);
+    // console.log(`slippage ${slippage}`);
+    // console.log(`curSqrtPrice ${curSqrtPrice}`);
+    // console.log(`decimalsA ${decimalsA}`);
+    // console.log(`decimalsB ${decimalsB}`);
+    return this.server.getTokenAmountByTicks(lowerTick, upperTick, coinAmount, isCoinA, slippage, curSqrtPrice, decimalsA, decimalsB);
   }
 }
 
