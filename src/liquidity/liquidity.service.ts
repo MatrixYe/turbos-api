@@ -274,15 +274,7 @@ export class LiquidityService {
   async removeLiquidity(poolId: string, nftId: string, posId: string, slippage: string) {
     // 获取仓位信息
     const position = await this.sdk.nft.getPositionFieldsByPositionId(posId);
-    // 获取池子信息
-    const pool = await this.sdk.pool.getPool(poolId);
-    // 计算a,b代币数量by 仓位流动性
-    const [a, b] = this.sdk.pool.getTokenAmountsFromLiquidity({
-      liquidity: new BN(position.liquidity),
-      currentSqrtPrice: new BN(pool.sqrt_price),
-      lowerSqrtPrice: this.bitToSqrtPriceBN(position.tick_lower_index.fields.bits),
-      upperSqrtPrice: this.bitToSqrtPriceBN(position.tick_upper_index.fields.bits),
-    });
+
 
     // 获取未领取的奖励
     const feesAndRewards = await this.sdk.nft.getUnclaimedFeesAndRewards({
@@ -295,6 +287,15 @@ export class LiquidityService {
     const collectAmountB = feesAndRewards.fields.feeOwedB;
     // 计算rewards收益
     const rewards = feesAndRewards.fields.collectRewards;
+    // 获取池子信息
+    const pool = await this.sdk.pool.getPool(poolId);
+    // 计算a,b代币数量by 仓位流动性
+    const [a, b] = this.sdk.pool.getTokenAmountsFromLiquidity({
+      liquidity: new BN(position.liquidity),
+      currentSqrtPrice: new BN(pool.sqrt_price),
+      lowerSqrtPrice: this.bitToSqrtPriceBN(position.tick_lower_index.fields.bits),
+      upperSqrtPrice: this.bitToSqrtPriceBN(position.tick_upper_index.fields.bits),
+    });
     const txb = await this.sdk.pool.removeLiquidity({
       address: this.sender,
       amountA: a.toString(),
