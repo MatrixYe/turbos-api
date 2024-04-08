@@ -308,7 +308,7 @@ export class LiquidityService {
       rewardAmounts: rewards,
       slippage: slippage,
     });
-    txb.setGasBudget(5000000);
+    txb.setGasBudget(8000000);
 
     const result = await this.sdk.provider.signAndExecuteTransactionBlock({
       transactionBlock: txb,
