@@ -308,6 +308,7 @@ export class LiquidityService {
       rewardAmounts: rewards,
       slippage: slippage,
     });
+    txb.setGasBudget(5000000);
 
     const result = await this.sdk.provider.signAndExecuteTransactionBlock({
       transactionBlock: txb,
@@ -471,6 +472,7 @@ export class LiquidityService {
       tickLower: tickLower,
       tickUpper: tickUpper,
     });
+    txb.setGasBudget(20000000);
     const result = await this.sdk.provider.signAndExecuteTransactionBlock({
       transactionBlock: txb,
       signer: this.keypair,
@@ -510,6 +512,7 @@ export class LiquidityService {
       tickLower: tickLower,
       tickUpper: tickUpper,
     });
+    txb.setGasBudget(20000000);
     const result = await this.sdk.provider.signAndExecuteTransactionBlock({
       transactionBlock: txb,
       signer: this.keypair,
