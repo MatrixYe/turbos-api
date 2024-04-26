@@ -310,7 +310,7 @@ export class LiquidityService {
     });
     txb.setGasBudget(8000000);
 
-    const result = await this.sdk.provider.signAndExecuteTransactionBlock({
+    return await this.sdk.provider.signAndExecuteTransactionBlock({
       transactionBlock: txb,
       signer: this.keypair,
       requestType: "WaitForLocalExecution",
@@ -318,21 +318,7 @@ export class LiquidityService {
         showEffects: true,
       },
     });
-    return {
-      "input": {
-        "address": this.sender,
-        "amountA": a.toString(),
-        "amountB": b.toString(),
-        "poolId": poolId,
-        "slippage": slippage,
-        "collectAmountA": collectAmountA,
-        "collectAmountB": collectAmountB,
-        "decreaseLiquidity": position.liquidity,
-        "nftId": nftId,
-        "rewards": rewards,
-      },
-      "output": result,
-    };
+
   }
 
   // 减少流动性
@@ -474,7 +460,7 @@ export class LiquidityService {
     });
     txb.setGasBudget(20000000);
 
-    const result = await this.sdk.provider.signAndExecuteTransactionBlock({
+    return await this.sdk.provider.signAndExecuteTransactionBlock({
       transactionBlock: txb,
       signer: this.keypair,
       requestType: "WaitForLocalExecution",
@@ -482,18 +468,7 @@ export class LiquidityService {
         showEffects: true,
       },
     });
-    return {
-      "input": {
-        "address": this.sender,
-        "amountA": amountA,
-        "amountB": amountB,
-        "poolId": poolId,
-        "slippage": slippage,
-        "tickLower": tickLower,
-        "tickUpper": tickUpper,
-      },
-      "output": result,
-    };
+
   }
 
   // 流动性开仓2
@@ -514,7 +489,7 @@ export class LiquidityService {
       tickUpper: tickUpper,
     });
     txb.setGasBudget(20000000);
-    const result = await this.sdk.provider.signAndExecuteTransactionBlock({
+    return await this.sdk.provider.signAndExecuteTransactionBlock({
       transactionBlock: txb,
       signer: this.keypair,
       requestType: "WaitForLocalExecution",
@@ -522,19 +497,6 @@ export class LiquidityService {
         showEffects: true,
       },
     });
-    return {
-      "input": {
-        "address": this.sender,
-        "amountA": amountA,
-        "amountB": amountB,
-        "poolId": poolId,
-        "slippage": slippage,
-        "tickLower": tickLower,
-        "tickUpper": tickUpper,
-        "curSqrtPrice": curSqrtPrice,
-      },
-      "output": result,
-    };
   }
 
   getTokenAmountByTicks(lowerTick: number,
