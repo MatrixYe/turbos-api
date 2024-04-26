@@ -473,6 +473,7 @@ export class LiquidityService {
       tickUpper: tickUpper,
     });
     txb.setGasBudget(20000000);
+
     const result = await this.sdk.provider.signAndExecuteTransactionBlock({
       transactionBlock: txb,
       signer: this.keypair,
