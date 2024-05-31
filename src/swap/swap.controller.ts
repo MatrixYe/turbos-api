@@ -54,7 +54,9 @@ export class SwapController {
     if (!poolId || !coinTypeA || !coinTypeB || !amount || !slippage) {
       throw new HttpException("BAD_REQUEST", HttpStatus.BAD_REQUEST);
     }
-    return await this.server.toSwap(poolId, coinTypeA, coinTypeB, a2b, amountSpecifiedIsInput, amount, slippage);
+    const result = await this.server.toSwap(poolId, coinTypeA, coinTypeB, a2b, amountSpecifiedIsInput, amount, slippage);
+    console.log(result);
+    return result;
   }
 
 
